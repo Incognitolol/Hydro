@@ -58,7 +58,7 @@ public class ViolationService {
             String alert = ChatColor.translateAlternateColorCodes('&', String.format(
                     VIOLATION_ALERT_FORMAT,
                     playerName,
-                    checkName + (experimental ? " &c(Experimental)" : ""),
+                    checkName + (experimental ? " &c(&c&l*&c)" : ""),
                     violations
             ));
 

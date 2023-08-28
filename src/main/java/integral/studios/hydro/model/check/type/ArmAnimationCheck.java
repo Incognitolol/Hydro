@@ -6,6 +6,7 @@ import integral.studios.hydro.model.check.violation.category.Category;
 import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.util.math.MathUtil;
 import integral.studios.hydro.util.packet.PacketHelper;
 
 import java.util.LinkedList;
@@ -14,7 +15,7 @@ import java.util.Queue;
 public abstract class ArmAnimationCheck extends PacketCheck {
     private final Queue<Integer> clickSamples = new LinkedList<>();
 
-    private static final int MAX_COMBAT_TICKS = 20 * 60; // 1 minutecuh
+    private static final int MAX_COMBAT_TICKS = 20 * 60; // 1 minute
 
     private final boolean combatCheck, doubleClicks;
 
@@ -45,7 +46,9 @@ public abstract class ArmAnimationCheck extends PacketCheck {
                 }
 
                 if (clickSamples.add(movements) && clickSamples.size() == maxClickSamples) {
-                    handle(clickSamples);
+                    double cps = MathUtil.getCps(clickSamples);
+
+                    handle(clickSamples, cps);
 
                     clickSamples.clear();
                 }
@@ -57,5 +60,5 @@ public abstract class ArmAnimationCheck extends PacketCheck {
         }
     }
 
-    public abstract void handle(Queue<Integer> samples);
+    public abstract void handle(Queue<Integer> clickSamples, double cps);
 }

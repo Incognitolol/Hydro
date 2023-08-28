@@ -77,6 +77,6 @@ public class TrackedPosition {
     }
 
     private int doubleToInt(final double d) {
-        return (d * 32);
+        return (int) Math.round(d * 32);
     }
 }

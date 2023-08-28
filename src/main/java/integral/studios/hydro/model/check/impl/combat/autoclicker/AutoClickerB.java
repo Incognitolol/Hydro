@@ -14,16 +14,12 @@ public class AutoClickerB extends ArmAnimationCheck {
     }
 
     @Override
-    public void handle(Queue<Integer> clickSamples) {
+    public void handle(Queue<Integer> clickSamples, double cps) {
         double kurtosis = Stats.kurtosis(clickSamples);
 
         // platykurticcuh
-        if (kurtosis <= 0D) {
-            if (++vl > 1) {
-                handleViolation(new DetailedPlayerViolation(this, "\n- §3Kurtosis: §b" + kurtosis));
-            } else {
-                decreaseVl(0.65D);
-            }
+        if (kurtosis <= 0) {
+            handleViolation(new DetailedPlayerViolation(this, "\n- §3Kurtosis: §b" + kurtosis + "\n- §3CPS: §b" + cps));
         }
     }
 }

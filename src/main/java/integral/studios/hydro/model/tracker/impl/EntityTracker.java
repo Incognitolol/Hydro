@@ -15,9 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /*
- * Figure out what's wrong cuh
- * - Mexify
+ * Fixed this for people to learn from, I cba to keep looking at this project and having it broken.
  */
+
 @Getter
 public class EntityTracker extends Tracker {
     private final Map<Integer, TrackedEntity> entityMap = new HashMap<>();

@@ -46,32 +46,51 @@ public class Reach extends PacketCheck {
 
     @Override
     public void handle(PacketReceiveEvent event) {
+        // Handle incoming INTERACT_ENTITY packets
         if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
             WrapperPlayClientInteractEntity interactEntity = new WrapperPlayClientInteractEntity(event);
+
+            if (teleportTracker.isTeleporting()) {
+
+                // Cancel the packet if the player is teleporting
+                event.setCancelled(true);
+                return;
+            }
 
             if (interactEntity.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
                 attacked = true;
                 entityId = interactEntity.getEntityId();
 
+                // Get the compensated entity from the entity tracker
                 TrackedEntity compensatedEntity = entityTracker.getEntityMap().get(entityId);
 
                 if (compensatedEntity == null) {
+
+                    // Cancel the packet if the entity is not found
+                    if (entityTracker.getEntityMap().containsKey(entityId)) {
+                        event.setCancelled(true);
+                    }
                     return;
                 }
 
                 if (attributeTracker.isCreativeMode()) {
+                    // Cancel the packet if the player is in creative mode
                     return;
                 }
             }
         }
 
+        // Handle flying packets
         if (PacketHelper.isFlying(event.getPacketType())) {
             if (!attacked || teleportTracker.isTeleporting()) {
+
+                // Skip the check if no attack happened or the player is teleporting
                 return;
             }
 
             attacked = false;
 
+            // Get the compensated entity from the entity tracker
             TrackedEntity compensatedEntity = entityTracker.get(entityId);
 
             if (compensatedEntity == null) {
@@ -80,10 +99,14 @@ public class Reach extends PacketCheck {
 
             AtomicReference<Double> minDistance = new AtomicReference<>(Double.MAX_VALUE);
 
+
             for (boolean fastMath : BOOLEANS) {
                 ClientMath clientMath = fastMath ? optifineMath : vanillaMath;
 
+
                 Vec3[] possibleEyeRotation = {
+
+                        // Calculate the eye rotation based on different yaw and pitch values
                         MathUtil.getVectorForRotation(rotationTracker.getYaw(), rotationTracker.getPitch(), clientMath),
                         MathUtil.getVectorForRotation(rotationTracker.getLastYaw(), rotationTracker.getLastPitch(), clientMath),
                         MathUtil.getVectorForRotation(rotationTracker.getLastYaw(), rotationTracker.getPitch(), clientMath),
@@ -92,26 +115,36 @@ public class Reach extends PacketCheck {
                 for (boolean sneaking : BOOLEANS) {
                     for (Vec3 eyeRotation : possibleEyeRotation) {
                         Vec3 eyePos = new Vec3(
+
+                                // Calculate the eye position based on player's position and eye height
                                 movementTracker.getLastX(),
                                 movementTracker.getLastY() + MathUtil.getEyeHeight(sneaking),
                                 movementTracker.getLastZ()
                         );
 
                         Vec3 endReachRay = eyePos.addVector(
-                                eyeRotation.xCoord * 6,
-                                eyeRotation.yCoord * 6,
-                                eyeRotation.zCoord * 6
+
+                                // Calculate the end position of the reach ray
+                                   eyeRotation.xCoord * 6.0D,
+                                eyeRotation.yCoord * 6.0D,
+                                eyeRotation.zCoord * 6.0D
                         );
 
                         for (TrackedPosition position : compensatedEntity.getPositions()) {
                             AxisAlignedBB axisAlignedBB = new AxisAlignedBB(
+                                    // Create an axis-aligned bounding box from entity's position
                                     position.getPosX(),
                                     position.getPosY(),
                                     position.getPosZ()
                             );
 
-                            axisAlignedBB.expand(0.1F, 0.1F, 0.1F);
+                            axisAlignedBB = axisAlignedBB.expand(0.1F, 0.1F, 0.1F);
 
+                            if (playerData.getMovementTracker().getTicksSincePosition() > 0) {
+                                axisAlignedBB = axisAlignedBB.expand(0.03, 0.03, 0.03);
+                            }
+
+                            // Calculate the intersection of the reach ray and the bounding box
                             MovingObjectPosition intercept = axisAlignedBB.calculateIntercept(eyePos, endReachRay);
 
                             if (intercept != null) {

@@ -108,7 +108,8 @@ public class CollisionTracker extends Tracker {
                     inWeb = verticalBlocks.stream().anyMatch(block -> block.getType() == StateTypes.COBWEB
                             && block.getY() >= floorY && block.getY() <= floorYHead);
 
-                    // underBlock = BBUtil.isCollidedAbove(bbs, targetY + 1.8);
+                    underBlock = verticalBlocks.stream().anyMatch(wrappedBlock -> wrappedBlock.getY() == floorY &&
+                            wrappedBlock.getType().isSolid());
 
                     collidedVertically = onGround || underBlock;
                 }

@@ -7,8 +7,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 /*
- * Missing stuff figure it out.
- * LOOK AT IT CLOSELY
+ * Fixed this for people to learn from, I cba to keep looking at this project and having it broken.
  */
 @Getter
 @Setter
@@ -19,21 +18,21 @@ public class TrackedEntity {
 
     private TrackedPosition lastTrackedPos = new TrackedPosition(1, 2, 3);
 
-    private EntityMovement lastMovement = new EntityMovement(0,0,0, EntityMovement.Type.NONE);
+    private EntityMovement lastMovement = new EntityMovement(0, 0, 0, EntityMovement.Type.NONE);
 
     public TrackedEntity(double x, double y, double z) {
         this.positions.add(new TrackedPosition(x, y, z));
     }
 
     public void handleMovement(double x, double y, double z) {
-        lastMovement = new EntityMovement(x,y,z, EntityMovement.Type.RELATIVE);
+        lastMovement = new EntityMovement(x, y, z, EntityMovement.Type.RELATIVE);
         confirming = true;
 
         positions.forEach(trackedPosition -> trackedPosition.handleMovement(x, y, z));
     }
 
     public void handleTeleport(double x, double y, double z) {
-        lastMovement = new EntityMovement(x,y,z, EntityMovement.Type.ABSOLUTE);
+        lastMovement = new EntityMovement(x, y, z, EntityMovement.Type.ABSOLUTE);
         confirming = true;
 
         positions.forEach(trackedPosition -> trackedPosition.handleTeleport(x, y, z));
@@ -42,6 +41,10 @@ public class TrackedEntity {
     public void handlePostTransaction() {
         confirming = false;
         positions.removeIf(position -> position.equals(lastTrackedPos));
+
+        if (positions.size() > 1) {
+            lastTrackedPos = positions.removeFirst();
+        }
     }
 
     public void handlePostFlying() {
@@ -50,6 +53,12 @@ public class TrackedEntity {
 
             if (lastMovement.getType() == EntityMovement.Type.ABSOLUTE) {
                 lastTrackedPos.handleTeleport(
+                        lastMovement.getX(),
+                        lastMovement.getY(),
+                        lastMovement.getZ()
+                );
+            } else {
+                lastTrackedPos.handleMovement(
                         lastMovement.getX(),
                         lastMovement.getY(),
                         lastMovement.getZ()
