@@ -5,6 +5,7 @@ Don't have time or reason to finish it, so here is another unfinished product th
 Contributors:
 - https://github.com/Incognitolol
 - https://github.com/gbomexify
+- https://github.com/Tecnio
 - https://github.com/SalersFR
 
 Credits:
