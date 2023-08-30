@@ -13,8 +13,8 @@ public abstract class ArmAnimationCapCheck extends PacketCheck {
 
     private int movements;
 
-    public ArmAnimationCapCheck(PlayerData playerData, String name, String desc, ViolationHandler violationHandler) {
-        super(playerData, name, desc, violationHandler, Category.COMBAT, SubCategory.AUTO_CLICKER);
+    public ArmAnimationCapCheck(PlayerData playerData, String name, String desc, String credits, ViolationHandler violationHandler) {
+        super(playerData, name, desc, credits, violationHandler, Category.COMBAT, SubCategory.AUTO_CLICKER);
     }
 
     @Override

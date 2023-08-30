@@ -9,7 +9,7 @@ import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 
 public class PingSpoofA extends PacketCheck {
     public PingSpoofA(PlayerData playerData) {
-        super(playerData, "Ping Spoof A", "Yes Check", new ViolationHandler(15, 60L), Category.MISC, SubCategory.PING_SPOOF);
+        super(playerData, "Ping Spoof A", "Yes Check", "", new ViolationHandler(15, 60L), Category.MISC, SubCategory.PING_SPOOF);
     }
 
     @Override

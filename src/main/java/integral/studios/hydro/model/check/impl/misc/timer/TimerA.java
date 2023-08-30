@@ -18,7 +18,7 @@ public class TimerA extends PacketCheck {
     private long lastFlying;
 
     public TimerA(PlayerData playerData) {
-        super(playerData, "Timer A", "Modification Game Speed Check", new ViolationHandler(15, 120L), Category.MISC, SubCategory.TIMER);
+        super(playerData, "Timer A", "Modification Game Speed Check", "Incognito", new ViolationHandler(15, 120L), Category.MISC, SubCategory.TIMER);
     }
 
     @Override

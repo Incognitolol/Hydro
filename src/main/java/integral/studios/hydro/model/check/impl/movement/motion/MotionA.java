@@ -9,7 +9,7 @@ import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 
 public class MotionA extends PositionCheck {
     public MotionA(PlayerData playerData) {
-        super(playerData, "Motion A", "Yes Check", new ViolationHandler(15, 300L), Category.MOVEMENT, SubCategory.MOTION);
+        super(playerData, "Motion A", "Yes Check", "", new ViolationHandler(15, 300L), Category.MOVEMENT, SubCategory.MOTION);
     }
 
     @Override

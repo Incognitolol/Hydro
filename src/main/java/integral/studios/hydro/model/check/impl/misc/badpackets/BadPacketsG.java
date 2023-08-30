@@ -12,15 +12,9 @@ import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation;
 import integral.studios.hydro.util.math.MathUtil;
 
-/**
- * Copyright (c) 2022 - Tranquil, LLC.
- *
- * @author incognito@tranquil.cc
- * @date 5/16/2023
- */
 public class BadPacketsG extends PacketCheck {
     public BadPacketsG(PlayerData playerData) {
-        super(playerData, "Bad Packets G", "Invalid SteerVehicle packets.", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets G", "Invalid SteerVehicle packets.", "Incognito", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override

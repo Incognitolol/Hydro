@@ -13,16 +13,10 @@ import integral.studios.hydro.model.check.violation.impl.PlayerViolation;
 
 import java.net.InetAddress;
 
-/**
- * Copyright (c) 2022 - Tranquil, LLC.
- *
- * @author incognito@tranquil.cc
- * @date 5/16/2023
- */
 public class BadPacketsH extends PacketCheck {
 
     public BadPacketsH(PlayerData playerData) {
-        super(playerData, "Bad Packets H", "Spoofed KeepAlive packet", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets H", "Spoofed KeepAlive packet", "Incognito", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override

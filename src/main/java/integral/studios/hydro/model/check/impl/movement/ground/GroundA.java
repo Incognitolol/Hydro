@@ -9,7 +9,7 @@ import integral.studios.hydro.util.location.CustomLocation;
 
 public class GroundA extends PositionCheck {
     public GroundA(PlayerData playerData) {
-        super(playerData, "Ground A", "Yes Check", new ViolationHandler(20, 300L), Category.MOVEMENT, SubCategory.GROUND);
+        super(playerData, "Ground A", "Yes Check", "", new ViolationHandler(20, 300L), Category.MOVEMENT, SubCategory.GROUND);
     }
 
     @Override

@@ -10,7 +10,7 @@ import java.util.Queue;
 
 public class AutoClickerB extends ArmAnimationCheck {
     public AutoClickerB(PlayerData playerData) {
-        super(playerData, "Auto Clicker B", "Low Distribution of Kurtosis Check", ViolationHandler.EXPERIMENTAL, false, false, 750, 8);
+        super(playerData, "Auto Clicker B", "Low Distribution of Kurtosis Check", "Incognito", ViolationHandler.EXPERIMENTAL, false, false, 750, 8);
     }
 
     @Override

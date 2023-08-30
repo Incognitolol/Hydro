@@ -10,7 +10,7 @@ import integral.studios.hydro.util.location.CustomLocation;
 
 public class SpeedB extends PositionCheck {
     public SpeedB(PlayerData playerData) {
-        super(playerData, "Movement Validation", "Movement Emulation Check", ViolationHandler.EXPERIMENTAL, Category.MOVEMENT, SubCategory.SPEED);
+        super(playerData, "Movement Validation", "Movement Emulation Check", "Mexify & Salers", ViolationHandler.EXPERIMENTAL, Category.MOVEMENT, SubCategory.SPEED);
     }
 
     @Override

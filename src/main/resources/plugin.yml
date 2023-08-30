@@ -1,4 +1,4 @@
-name: Hydro
+name: Hydro-Anticheat
 main: integral.studios.hydro.Hydro
 version: ${git.commit.id.abbrev}
 authors: [Mexify, Incognito, Salers]
