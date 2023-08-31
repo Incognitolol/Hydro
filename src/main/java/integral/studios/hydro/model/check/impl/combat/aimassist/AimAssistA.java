@@ -12,7 +12,7 @@ public class AimAssistA extends RotationCheck {
     private float suspiciousYaw;
 
     public AimAssistA(PlayerData playerData) {
-        super(playerData, "Aim Assist A", "Rounded Yaw Check", new ViolationHandler(20, 60L), Category.COMBAT, SubCategory.AIM_ASSIST);
+        super(playerData, "Aim Assist A", "Rounded Yaw Check", "Sim0n/Nemesis", new ViolationHandler(20, 60L), Category.COMBAT, SubCategory.AIM_ASSIST);
     }
 
     @Override

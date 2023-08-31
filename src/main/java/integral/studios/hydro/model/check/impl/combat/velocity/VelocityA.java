@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class VelocityA extends PositionCheck {
     public VelocityA(PlayerData playerData) {
-        super(playerData, "Velocity A", "Modification of Vertical Velocity", new ViolationHandler(25, 120L), Category.COMBAT, SubCategory.VELOCITY);
+        super(playerData, "Velocity A", "Modification of Vertical Velocity", "Salers", new ViolationHandler(25, 120L), Category.COMBAT, SubCategory.VELOCITY);
     }
 
     @Override

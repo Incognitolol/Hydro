@@ -13,11 +13,11 @@ import java.util.*;
 
 public class AutoClickerDebug extends ArmAnimationCheck {
     public AutoClickerDebug(PlayerData playerData) {
-        super(playerData, "Auto Clicker Debug", "Auto Clicker Debug", ViolationHandler.DEVELOPMENT, false, false, 150, 8);
+        super(playerData, "Auto Clicker Debug", "Auto Clicker Debug", "Mexify", ViolationHandler.DEVELOPMENT, false, false, 150, 8);
     }
 
     @Override
-    public void handle(Queue<Integer> clickSamples) {
+    public void handle(Queue<Integer> clickSamples, double cps) {
         if (playerData.isSniffingClicks()) {
             double kur = Stats.kurtosis(clickSamples);
             double skew = Stats.skewness(clickSamples);

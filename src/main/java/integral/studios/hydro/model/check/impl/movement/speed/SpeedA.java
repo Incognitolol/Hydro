@@ -20,7 +20,7 @@ public class SpeedA extends PositionCheck {
     private double lastDeltaXZ;
 
     public SpeedA(PlayerData playerData) {
-        super(playerData, "Speed A", "Friction Check", new ViolationHandler(25, 300L), Category.MOVEMENT, SubCategory.SPEED);
+        super(playerData, "Speed A", "Friction Check", "Mexify", new ViolationHandler(25, 300L), Category.MOVEMENT, SubCategory.SPEED);
     }
 
     @Override

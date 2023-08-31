@@ -11,7 +11,7 @@ import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 
 public class KillAuraA extends PacketCheck {
     public KillAuraA(PlayerData playerData) {
-        super(playerData, "Kill Aura A", "Placing or Digging Whilst Attacking Check", new ViolationHandler(1, 300L), Category.COMBAT, SubCategory.KILL_AURA);
+        super(playerData, "Kill Aura A", "Placing or Digging Whilst Attacking Check", "", new ViolationHandler(1, 300L), Category.COMBAT, SubCategory.KILL_AURA);
     }
 
     @Override

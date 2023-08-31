@@ -8,8 +8,8 @@ import integral.studios.hydro.util.location.CustomLocation;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 
 public abstract class PositionCheck extends Check {
-    public PositionCheck(PlayerData playerData, String name, String desc, ViolationHandler violationHandler, Category category, SubCategory subCategory) {
-        super(playerData, name, desc, violationHandler, category, subCategory);
+    public PositionCheck(PlayerData playerData, String name, String desc, String credits, ViolationHandler violationHandler, Category category, SubCategory subCategory) {
+        super(playerData, name, desc, credits, violationHandler, category, subCategory);
     }
 
     public abstract void handle(CustomLocation to, CustomLocation from);

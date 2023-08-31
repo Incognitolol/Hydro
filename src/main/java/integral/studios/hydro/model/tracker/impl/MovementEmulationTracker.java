@@ -31,7 +31,6 @@ public class MovementEmulationTracker extends Tracker {
     private final OptifineMath optifineMath = new OptifineMath();
     private final VanillaMath vanillaMath = new VanillaMath();
 
-    // Constructor
     public MovementEmulationTracker(PlayerData playerData) {
         super(playerData);
     }
@@ -72,7 +71,8 @@ public class MovementEmulationTracker extends Tracker {
                                                              */
                                                             float forward = forw, strafe = stra; // Initialize the movement directions based on the loop iteration
 
-                                                            ClientMath clientMath = fastMath ? optifineMath : vanillaMath; // Select the math utility based on the value of 'fastMath'
+                                                            // Select the math utility based on the value of 'fastMath'
+                                                            ClientMath clientMath = fastMath ? optifineMath : vanillaMath;
 
                                                             double bruteforceX = movementTracker.getLastDeltaX(); // Initialize 'bruteforceX' with the player's last delta X
                                                             double bruteforceZ = movementTracker.getLastDeltaZ(); // Initialize 'bruteforceZ' with the player's last delta Z

@@ -23,8 +23,8 @@ public abstract class ArmAnimationCheck extends PacketCheck {
 
     private int movements;
 
-    public ArmAnimationCheck(PlayerData playerData, String name, String desc, ViolationHandler violationHandler, boolean combatCheck, boolean doubleClicks, int maxSamples, int maxMovements) {
-        super(playerData, name, desc, violationHandler, Category.COMBAT, SubCategory.AUTO_CLICKER);
+    public ArmAnimationCheck(PlayerData playerData, String name, String desc, String credits, ViolationHandler violationHandler, boolean combatCheck, boolean doubleClicks, int maxSamples, int maxMovements) {
+        super(playerData, name, desc, credits, violationHandler, Category.COMBAT, SubCategory.AUTO_CLICKER);
 
         this.combatCheck = combatCheck;
         this.doubleClicks = doubleClicks;

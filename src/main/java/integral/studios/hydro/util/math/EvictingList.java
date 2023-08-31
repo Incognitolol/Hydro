@@ -1,19 +1,11 @@
 package integral.studios.hydro.util.math;
 
-
 import lombok.Getter;
 
 import java.util.Collection;
 import java.util.LinkedList;
 
-/**
- * Copyright (c) 2022 - Tranquil, LLC.
- *
- * @author incognito@tranquil.cc
- * @date 5/19/2023
- */
 public class EvictingList<T> extends LinkedList<T> {
-
     @Getter
     private final int maxSize;
 

@@ -18,7 +18,7 @@ public abstract class PostActionCheck extends PacketCheck {
     public long lastFlying, lastPacket;
 
     public PostActionCheck(PlayerData playerData, String name, String desc, Predicate<PacketReceiveEvent> predicate) {
-        super(playerData, name, desc, new ViolationHandler(15, 30L), Category.COMBAT, SubCategory.POST);
+        super(playerData, name, desc, "Mexify", new ViolationHandler(15, 30L), Category.COMBAT, SubCategory.POST);
 
         this.predicate = predicate;
     }

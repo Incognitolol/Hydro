@@ -10,16 +10,10 @@ import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation;
 
-/**
- * Copyright (c) 2022 - Tranquil, LLC.
- *
- * @author incognito@tranquil.cc
- * @date 4/18/2023
- */
 public class BadPacketsC1 extends PacketCheck {
 
     public BadPacketsC1(PlayerData playerData) {
-        super(playerData, "Bad Packets C1", "Illegal Payload Name", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets C1", "Illegal Payload Name", "Incognito", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override

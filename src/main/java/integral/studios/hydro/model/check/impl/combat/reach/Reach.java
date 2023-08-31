@@ -20,11 +20,6 @@ import integral.studios.hydro.util.packet.PacketHelper;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-/*
- * This is purposefully broken before anyone complains figure it out.
- * It's not that hard if I can see what's wrong, and you can't just an IQ issue.
- * - Mexify
- */
 public class Reach extends PacketCheck {
     private static final boolean[] BOOLEANS = {true, false};
 
@@ -41,7 +36,7 @@ public class Reach extends PacketCheck {
     private double hitBoxVL = -1;
 
     public Reach(PlayerData playerData) {
-        super(playerData, "Reach", "Modification Of Attack Distance Check", new ViolationHandler(20, 160L), Category.COMBAT, SubCategory.REACH);
+        super(playerData, "Reach", "Modification Of Attack Distance Check", "Mexify", new ViolationHandler(20, 160L), Category.COMBAT, SubCategory.REACH);
     }
 
     @Override
@@ -50,9 +45,8 @@ public class Reach extends PacketCheck {
         if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
             WrapperPlayClientInteractEntity interactEntity = new WrapperPlayClientInteractEntity(event);
 
+            // Cancel the packet if the player is teleporting
             if (teleportTracker.isTeleporting()) {
-
-                // Cancel the packet if the player is teleporting
                 event.setCancelled(true);
                 return;
             }
@@ -64,17 +58,17 @@ public class Reach extends PacketCheck {
                 // Get the compensated entity from the entity tracker
                 TrackedEntity compensatedEntity = entityTracker.getEntityMap().get(entityId);
 
+                // Cancel the packet if the entity is not found
                 if (compensatedEntity == null) {
-
-                    // Cancel the packet if the entity is not found
                     if (entityTracker.getEntityMap().containsKey(entityId)) {
                         event.setCancelled(true);
                     }
+
                     return;
                 }
 
+                // Cancel the packet if the player is in creative mode
                 if (attributeTracker.isCreativeMode()) {
-                    // Cancel the packet if the player is in creative mode
                     return;
                 }
             }
@@ -82,9 +76,8 @@ public class Reach extends PacketCheck {
 
         // Handle flying packets
         if (PacketHelper.isFlying(event.getPacketType())) {
+            // Skip the check if no attack happened or the player is teleporting
             if (!attacked || teleportTracker.isTeleporting()) {
-
-                // Skip the check if no attack happened or the player is teleporting
                 return;
             }
 
@@ -103,10 +96,8 @@ public class Reach extends PacketCheck {
             for (boolean fastMath : BOOLEANS) {
                 ClientMath clientMath = fastMath ? optifineMath : vanillaMath;
 
-
+                // Calculate the possible rotation for yaw and pitch
                 Vec3[] possibleEyeRotation = {
-
-                        // Calculate the eye rotation based on different yaw and pitch values
                         MathUtil.getVectorForRotation(rotationTracker.getYaw(), rotationTracker.getPitch(), clientMath),
                         MathUtil.getVectorForRotation(rotationTracker.getLastYaw(), rotationTracker.getLastPitch(), clientMath),
                         MathUtil.getVectorForRotation(rotationTracker.getLastYaw(), rotationTracker.getPitch(), clientMath),
@@ -114,32 +105,32 @@ public class Reach extends PacketCheck {
 
                 for (boolean sneaking : BOOLEANS) {
                     for (Vec3 eyeRotation : possibleEyeRotation) {
+                        // Calculate the eye position based on player's position and eye height
                         Vec3 eyePos = new Vec3(
-
-                                // Calculate the eye position based on player's position and eye height
                                 movementTracker.getLastX(),
                                 movementTracker.getLastY() + MathUtil.getEyeHeight(sneaking),
                                 movementTracker.getLastZ()
                         );
 
+                        // Calculate the end position of the reach ray
                         Vec3 endReachRay = eyePos.addVector(
-
-                                // Calculate the end position of the reach ray
                                    eyeRotation.xCoord * 6.0D,
                                 eyeRotation.yCoord * 6.0D,
                                 eyeRotation.zCoord * 6.0D
                         );
 
                         for (TrackedPosition position : compensatedEntity.getPositions()) {
+                            // Create an axis-aligned bounding box from entity's position
                             AxisAlignedBB axisAlignedBB = new AxisAlignedBB(
-                                    // Create an axis-aligned bounding box from entity's position
                                     position.getPosX(),
                                     position.getPosY(),
                                     position.getPosZ()
                             );
 
+                            // Expand BoundingBox for 1.7/1.8 players
                             axisAlignedBB = axisAlignedBB.expand(0.1F, 0.1F, 0.1F);
 
+                            // Expand BoundingBox when 0.03 has possibly occurred
                             if (playerData.getMovementTracker().getTicksSincePosition() > 0) {
                                 axisAlignedBB = axisAlignedBB.expand(0.03, 0.03, 0.03);
                             }
@@ -150,6 +141,7 @@ public class Reach extends PacketCheck {
                             if (intercept != null) {
                                 double range = intercept.hitVec.distanceTo(eyePos);
 
+                                // Use the smallest outcome
                                 if (range < minDistance.get()) {
                                     minDistance.set(range);
                                 }

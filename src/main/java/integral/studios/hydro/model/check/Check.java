@@ -29,7 +29,7 @@ public abstract class Check {
     protected final ActionTracker actionTracker;
 
     protected final PlayerData playerData;
-    private final String name, desc;
+    private final String name, desc, credits;
 
     private final ViolationHandler violationHandler;
 
@@ -39,10 +39,11 @@ public abstract class Check {
 
     protected double vl = 0D;
 
-    protected Check(PlayerData playerData, String name, String desc, ViolationHandler violationHandler, Category category, SubCategory subCategory) {
+    protected Check(PlayerData playerData, String name, String desc, String credits, ViolationHandler violationHandler, Category category, SubCategory subCategory) {
         this.playerData = playerData;
         this.name = name;
         this.desc = desc;
+        this.credits = credits;
         this.violationHandler = violationHandler;
         this.category = category;
         this.subCategory = subCategory;

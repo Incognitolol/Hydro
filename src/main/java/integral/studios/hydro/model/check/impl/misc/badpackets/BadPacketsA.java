@@ -10,7 +10,7 @@ import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation
 
 public class BadPacketsA extends RotationCheck {
     public BadPacketsA(PlayerData playerData) {
-        super(playerData, "Bad Packets A", "Impossible Pitch Check", new ViolationHandler(1, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets A", "Impossible Pitch Check", "", new ViolationHandler(1, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override

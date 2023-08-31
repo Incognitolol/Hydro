@@ -10,15 +10,9 @@ import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.check.violation.impl.PlayerViolation;
 
-/**
- * Copyright (c) 2022 - Tranquil, LLC.
- *
- * @author incognito@tranquil.cc
- * @date 4/18/2023
- */
 public class BadPacketsD extends PacketCheck {
     public BadPacketsD(PlayerData playerData) {
-        super(playerData, "Bad Packets D", "Interacted with self Check", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets D", "Interacted with self Check", "Incognito", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override

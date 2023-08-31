@@ -1,0 +1,3 @@
+integral.studios.hydro.model.command.impl.AlertsCommand
+integral.studios.hydro.model.command.impl.LogsCommand
+integral.studios.hydro.model.command.impl.SniffingClicksCommand

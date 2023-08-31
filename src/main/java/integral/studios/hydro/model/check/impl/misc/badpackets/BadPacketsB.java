@@ -15,7 +15,7 @@ public class BadPacketsB extends PacketCheck {
     private boolean sent = false;
 
     public BadPacketsB(PlayerData playerData) {
-        super(playerData, "Bad Packets B", "Double Sprint or Sneak Check", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets B", "Double Sprint or Sneak Check", "", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override

@@ -10,7 +10,7 @@ import java.util.Queue;
 
 public class AutoClickerC extends ArmAnimationCheck {
     public AutoClickerC(PlayerData playerData) {
-        super(playerData, "Auto Clicker C", "Low Randomization Spread Check", ViolationHandler.EXPERIMENTAL, false, false, 800, 8);
+        super(playerData, "Auto Clicker C", "Low Randomization Spread Check", "Incognito", ViolationHandler.EXPERIMENTAL, false, false, 800, 8);
     }
 
     @Override

@@ -7,7 +7,7 @@ import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 
 public class AutoClickerA extends ArmAnimationCapCheck {
     public AutoClickerA(PlayerData playerData) {
-        super(playerData, "Auto Clicker A", "High CPS Check", new ViolationHandler(5, 120L));
+        super(playerData, "Auto Clicker A", "High CPS Check", "Mexify", new ViolationHandler(5, 120L));
     }
 
     @Override
