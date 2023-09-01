@@ -13,6 +13,7 @@ Credits:
 - https://github.com/ThomasOM (Pledge) - Transaction packet tracking API
 - https://github.com/retrooper (PacketEvents) - Packet API that is clean and simple to use
 - https://github.com/ScatDev (Aquarium) - Unfinished world tracker
+- https://github.com/funkemunky (Kuari) - TagsBuilder
 
 Notes:
 - If you plan on contributing to Hydro stick with the project conventions. Create your own branch when contributing.
