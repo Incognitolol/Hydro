@@ -60,6 +60,7 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- Iridium Math -->
         <dependency>
             <groupId>dev.sim0n</groupId>
             <artifactId>iridium</artifactId>
@@ -151,6 +152,7 @@
 
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <minimizeJar>true</minimizeJar>
                 </configuration>
 
                 <executions>
