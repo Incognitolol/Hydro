@@ -6,7 +6,7 @@ Contributors:
 - https://github.com/Incognitolol (Clicker + Bad-Packet + Timer checks + Fixes in reach check and some base stuff)
 - https://github.com/gbomexify (Reach + Speed + Post checks + Fixes in clicker checks and most of the base stuff)
 - https://github.com/SalersFR (Velocity + Speed check and some fixes)
-- https://github.com/Tecnio ("Movement Emulation" concept)
+- https://github.com/Tecnio ("Movement Emulation", "Sensitivity System" concept)
 
 Credits:
 - https://github.com/sim0n (Nemesis and Iridium) - Anticheat base that we started on and util for clicker stuff
