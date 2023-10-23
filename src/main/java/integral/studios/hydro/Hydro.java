@@ -62,7 +62,12 @@ public class Hydro extends JavaPlugin {
     }
 
     private void registerConfiguration() {
-        File configFile = new File(getDataFolder(), "config.json");
+        File dataFolder = getDataFolder();
+        if (!dataFolder.exists()) {
+            dataFolder.mkdirs();
+        }
+
+        File configFile = new File(dataFolder, "config.json");
 
         try {
             if (!configFile.exists()) {
