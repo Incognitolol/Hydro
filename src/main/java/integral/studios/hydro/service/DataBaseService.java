@@ -11,7 +11,6 @@ import org.bson.Document;
 
 @Getter
 public class DataBaseService {
-
     private final Configuration config = Hydro.get().getConfiguration();
 
     private MongoClient client;

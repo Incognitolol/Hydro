@@ -5,10 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>integral.studios</groupId>
-    <artifactId>hydro</artifactId>
-    <version>1.0-BETA</version>
+    <artifactId>Hydro</artifactId>
+    <version>3.0-BETA</version>
 
     <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -19,9 +21,16 @@
             <url>https://raw.github.com/ThomasOM/Pledge/repository/</url>
         </repository>
 
+        <!-- PacketEvents -->
         <repository>
-            <id>iridium-repo</id>
-            <url>https://raw.github.com/sim0n/iridium/repository/</url>
+            <id>codemc-releases</id>
+            <url>https://repo.codemc.io/repository/maven-releases/</url>
+        </repository>
+
+        <!-- CommandAPI -->
+        <repository>
+            <id>aikar</id>
+            <url>https://repo.aikar.co/content/groups/aikar/</url>
         </repository>
 
         <!-- Spigot -->
@@ -30,16 +39,10 @@
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
 
-        <!-- JitPack -->
+        <!-- Iridium -->
         <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-
-        <!-- Funke stuff -->
-        <repository>
-            <id>funkemunky-releases</id>
-            <url>https://nexus.funkemunky.cc/content/repositories/releases/</url>
+            <id>iridium-repo</id>
+            <url>https://raw.github.com/sim0n/iridium/repository/</url>
         </repository>
     </repositories>
 
@@ -48,7 +51,7 @@
         <dependency>
             <groupId>dev.thomazz</groupId>
             <artifactId>pledge</artifactId>
-            <version>2.7</version>
+            <version>2.8</version>
             <scope>compile</scope>
         </dependency>
 
@@ -56,15 +59,15 @@
         <dependency>
             <groupId>com.github.retrooper.packetevents</groupId>
             <artifactId>spigot</artifactId>
-            <version>2.0.0-SNAPSHOT</version>
+            <version>2.1.0</version>
             <scope>compile</scope>
         </dependency>
 
-        <!-- Iridium Math -->
+        <!-- Command API -->
         <dependency>
-            <groupId>dev.sim0n</groupId>
-            <artifactId>iridium</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>co.aikar</groupId>
+            <artifactId>acf-paper</artifactId>
+            <version>0.5.1-SNAPSHOT</version>
         </dependency>
 
         <!-- Apache Math -->
@@ -119,7 +122,6 @@
             <version>3.12.12</version>
             <scope>compile</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -161,21 +163,8 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <!--<configuration>
-                            <transformers>
-                                <transformer implementation="org.atteo.classindex.ClassIndexTransformer"/>
-                            </transformers>
-                        </configuration>-->
                     </execution>
                 </executions>
-
-                <!--<dependencies>
-                    <dependency>
-                        <groupId>org.atteo.classindex</groupId>
-                        <artifactId>classindex-transformer</artifactId>
-                        <version>3.9</version>
-                    </dependency>
-                </dependencies>-->
             </plugin>
         </plugins>
     </build>

@@ -28,10 +28,9 @@ public final class ServiceKey<T> {
     public boolean equals(Object obj) {
         if (!(obj instanceof ServiceKey)) {
             return false;
-
         } else {
-
             ServiceKey that = (ServiceKey)obj;
+
             return type == that.type && Objects.equals(name, that.name);
         }
     }

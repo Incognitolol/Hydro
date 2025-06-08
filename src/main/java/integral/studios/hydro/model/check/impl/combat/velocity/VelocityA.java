@@ -2,36 +2,36 @@ package integral.studios.hydro.model.check.impl.combat.velocity;
 
 import com.github.retrooper.packetevents.util.Vector3d;
 import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.util.chat.CC;
 import integral.studios.hydro.model.check.type.PositionCheck;
 import integral.studios.hydro.model.check.violation.category.Category;
 import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation;
-import integral.studios.hydro.util.location.CustomLocation;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class VelocityA extends PositionCheck {
     public VelocityA(PlayerData playerData) {
-        super(playerData, "Velocity A", "Modification of Vertical Velocity", "Salers", new ViolationHandler(25, 120L), Category.COMBAT, SubCategory.VELOCITY);
+        super(playerData, "Velocity A", "Modification of Vertical Velocity", new ViolationHandler(25, 120L), Category.COMBAT, SubCategory.VELOCITY);
     }
 
     @Override
-    public void handle(CustomLocation to, CustomLocation from) {
+    public void handle() {
         // if during the velocity, the vertical movement could possibly be altered, we exempt.
         if (!velocityTracker.isOnFirstTick()
-                || collisionTracker.isUnderBlock()
+                || collisionTracker.isBonking()
                 || collisionTracker.isOnClimbable()
                 || collisionTracker.isInWater()
                 || collisionTracker.isInLava()
                 || collisionTracker.isInWeb()
-                || movementTracker.getDeltaY() >= 0.42F) {
+                || positionTracker.getDeltaY() >= 0.42F) {
             decreaseVl(0.01D);
             return;
         }
 
-        final double delta = movementTracker.getDeltaY();
+        final double delta = positionTracker.getDeltaY();
 
         final List<Double> velocities = velocityTracker.getPossibleVelocities().stream().mapToDouble(Vector3d::getY).
                 boxed().collect(Collectors.toList());
@@ -56,9 +56,9 @@ public class VelocityA extends PositionCheck {
                 vl = 2D;
 
                 handleViolation(new DetailedPlayerViolation(this,
-                        "\n- §3Offset: §b" + offset
-                                + "\n- §3First velocity §b" + velocities.get(0)
-                                + "\n- §3Delta-Y: §b" + delta
+                        "\n- " + CC.PRI + "Offset: " + CC.SEC + offset
+                                + "\n- " + CC.PRI + "First velocity " + CC.SEC + velocities.get(0)
+                                + "\n- " + CC.PRI + "Delta-Y: " + CC.SEC + delta
 
                 ));
             }

@@ -1,5 +1,5 @@
-name: Hydro-Anticheat
+name: Hydro
 main: integral.studios.hydro.Hydro
 version: ${git.commit.id.abbrev}
-authors: [Mexify, Incognito, Salers]
-description: wip and nay nay
+authors: [Incognito, Mexify, aSwitch, Scat, Salers]
+description: Anticheat go brrrrrrrr

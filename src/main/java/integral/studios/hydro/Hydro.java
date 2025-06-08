@@ -1,29 +1,37 @@
 package integral.studios.hydro;
 
+import co.aikar.commands.MessageType;
+import co.aikar.commands.PaperCommandManager;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import integral.studios.hydro.model.listener.PacketEventsListener;
-import integral.studios.hydro.model.listener.PledgeListener;
+import com.samjakob.spigui.GuiManager;
 import integral.studios.hydro.service.*;
+import dev.thomazz.pledge.api.Pledge;
+import integral.studios.hydro.model.command.impl.HydroCommands;
+import integral.studios.hydro.model.listener.packetevents.PacketEventsJoinQuitListener;
+import integral.studios.hydro.model.listener.packetevents.PacketEventsPacketListener;
+import integral.studios.hydro.model.listener.pledge.PledgeListener;
+import integral.studios.hydro.util.chat.CC;
 import integral.studios.hydro.util.config.Configuration;
-import integral.studios.hydro.model.listener.PlayerListener;
+import integral.studios.hydro.util.config.ConfigurationService;
+import integral.studios.hydro.util.menu.ButtonListener;
 import integral.studios.hydro.util.registry.ServiceRegistry;
 import integral.studios.hydro.util.registry.ServiceRegistryImpl;
 import integral.studios.hydro.util.task.ExportLogsTask;
 import integral.studios.hydro.util.task.ServerTickTask;
-import integral.studios.hydro.util.chat.CC;
-import integral.studios.hydro.util.chat.CommandUtil;
-import dev.thomazz.pledge.api.Pledge;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
 
 @Getter
 public class Hydro extends JavaPlugin {
-    public static final String PREFIX = CC.BLUE + "[" + "♿" + "] " + CC.RESET;
+    public static final SimpleDateFormat FORMAT = new SimpleDateFormat("MM/dd/yyyy HH:mma");
 
     public static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
@@ -34,6 +42,8 @@ public class Hydro extends JavaPlugin {
     private final ServiceRegistry serviceRegistry = new ServiceRegistryImpl();
 
     private Configuration configuration;
+
+    public static String PREFIX;
 
     private Pledge pledge;
 
@@ -54,6 +64,8 @@ public class Hydro extends JavaPlugin {
         registerListeners();
         registerTasks();
         registerCommands();
+
+        saveDefaultConfig();
     }
 
     @Override
@@ -89,7 +101,6 @@ public class Hydro extends JavaPlugin {
     private void registerPledge() {
         pledge = Pledge.build();
 
-        // lol
         pledge.setRange(-30000, -1);
         pledge.setTimeoutTicks(400);
         pledge.setFrameInterval(0);
@@ -102,19 +113,24 @@ public class Hydro extends JavaPlugin {
     }
 
     private void registerListeners() {
-        PacketEvents.getAPI().getEventManager().registerListeners(new PacketEventsListener());
-
         getServer().getPluginManager().registerEvents(new PledgeListener(), this);
-        getServer().getPluginManager().registerEvents(new PlayerListener(), this);
+
+        PacketEvents.getAPI().getEventManager().registerListeners(new PacketEventsPacketListener());
+        PacketEvents.getAPI().getEventManager().registerListeners(new PacketEventsJoinQuitListener());
+
+        getServer().getPluginManager().registerEvents(new ButtonListener(), this);
     }
 
     private void registerService() {
         install(PlayerDataService.class, new PlayerDataService());
         install(ViolationService.class, new ViolationService());
         install(DataBaseService.class, new DataBaseService());
-        install(CommandService.class, new CommandService());
         install(CheckService.class, new CheckService());
+        install(GuiService.class, new GuiService());
         install(LogService.class, new LogService());
+        install(PaperCommandManager.class, new PaperCommandManager(this));
+        install(ConfigurationService.class, new ConfigurationService());
+        install(GuiManager.class, new GuiManager(this));
     }
 
     private void registerTasks() {
@@ -129,8 +145,20 @@ public class Hydro extends JavaPlugin {
         }
     }
 
-    private void registerCommands() {
-        get(CommandService.class).getCommands().forEach(CommandUtil::registerCommand);
+    public void registerCommands() {
+        get(PaperCommandManager.class).enableUnstableAPI("help");
+
+        ChatColor primaryCC = ChatColor.getByChar(CC.PRI.charAt(1));
+        ChatColor secondaryCC = ChatColor.getByChar(CC.SEC.charAt(1));
+
+        get(PaperCommandManager.class).setFormat(MessageType.ERROR, ChatColor.RED, ChatColor.YELLOW, ChatColor.RED);
+        get(PaperCommandManager.class).setFormat(MessageType.INFO, primaryCC, secondaryCC, ChatColor.WHITE);
+        get(PaperCommandManager.class).setFormat(MessageType.HELP, primaryCC, secondaryCC, ChatColor.GRAY);
+        get(PaperCommandManager.class).setFormat(MessageType.SYNTAX, primaryCC, secondaryCC, ChatColor.WHITE);
+
+        Collections.singletonList(new HydroCommands()).forEach(hydroCommand -> {
+            get(PaperCommandManager.class).registerCommand(hydroCommand);
+        });
     }
 
     public boolean isLagging() {

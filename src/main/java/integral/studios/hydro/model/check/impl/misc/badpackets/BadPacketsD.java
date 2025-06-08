@@ -12,7 +12,7 @@ import integral.studios.hydro.model.check.violation.impl.PlayerViolation;
 
 public class BadPacketsD extends PacketCheck {
     public BadPacketsD(PlayerData playerData) {
-        super(playerData, "Bad Packets D", "Interacted with self Check", "Incognito", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets D", "Interacted with self Check", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override

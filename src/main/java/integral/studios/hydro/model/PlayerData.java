@@ -1,56 +1,41 @@
 package integral.studios.hydro.model;
 
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.player.User;
+import integral.studios.hydro.model.check.violation.log.ViolationLog;
+import integral.studios.hydro.model.emulator.EmulationEngine;
+import integral.studios.hydro.model.tracker.Tracker;
+import integral.studios.hydro.model.tracker.impl.*;
 import integral.studios.hydro.model.check.Check;
 import integral.studios.hydro.model.check.CheckData;
-import integral.studios.hydro.model.tracker.Tracker;
-import integral.studios.hydro.model.check.violation.log.ViolationLog;
 import integral.studios.hydro.model.tracker.impl.*;
 import lombok.Data;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 @Data
 public class PlayerData {
-    private static final Map<Field, Constructor<?>> CONSTRUCTORS = new HashMap<>();
-
-    static {
-        Arrays.stream(PlayerData.class.getDeclaredFields())
-                .filter(field -> Tracker.class.isAssignableFrom(field.getType()))
-                .forEach(field -> {
-                    Class<? extends Tracker> clazz = (Class<? extends Tracker>) field.getType();
-
-                    try {
-                        CONSTRUCTORS.put(field, clazz.getConstructor(PlayerData.class));
-                    } catch (NoSuchMethodException e) {
-                        e.printStackTrace();
-                    }
-                });
-    }
-
     private final Map<Check, Set<ViolationLog>> violations = new HashMap<>();
     private final Set<Tracker> trackers = new HashSet<>();
     private final CheckData checkData = new CheckData();
 
-    private final Player bukkitPlayer;
-
-    private int entityId;
-
-    private MovementEmulationTracker movementEmulationTracker;
     private TransactionTracker transactionTracker;
     private KeepAliveTracker keepAliveTracker;
     private CollisionTracker collisionTracker;
     private AttributeTracker attributeTracker;
-    private MovementTracker movementTracker;
+    private PositionTracker positionTracker;
     private RotationTracker rotationTracker;
     private TeleportTracker teleportTracker;
     private VelocityTracker velocityTracker;
     private EntityTracker entityTracker;
     private ActionTracker actionTracker;
-     private WorldTracker worldTracker;
+    private WorldTracker worldTracker;
+
+    private EmulationEngine emulationEngine;
+
+    private int entityId = -1;
 
     private boolean banning;
 
@@ -60,24 +45,44 @@ public class PlayerData {
 
     private ClientVersion clientVersion;
 
-    public PlayerData(Player player) {
-        bukkitPlayer = player;
+    public UUID uuid;
 
-        entityId = bukkitPlayer.getEntityId();
+    public PlayerData(User user) {
+        uuid = user.getUUID();
 
-        CONSTRUCTORS.forEach((field, constructor) -> {
-            try {
-                Tracker tracker = (Tracker) constructor.newInstance(this);
+        clientVersion = user.getClientVersion();
 
-                trackers.add(tracker);
+        collisionTracker = new CollisionTracker(this);
+        positionTracker = new PositionTracker(this);
+        rotationTracker = new RotationTracker(this);
+        teleportTracker = new TeleportTracker(this);
+        worldTracker = new WorldTracker(this);
+        transactionTracker = new TransactionTracker(this);
+        keepAliveTracker = new KeepAliveTracker(this);
+        entityTracker = new EntityTracker(this);
+        attributeTracker = new AttributeTracker(this);
+        velocityTracker = new VelocityTracker(this);
+        actionTracker = new ActionTracker(this);
 
-                field.set(this, tracker);
-            } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        });
+        trackers.add(collisionTracker);
+        trackers.add(positionTracker);
+        trackers.add(rotationTracker);
+        trackers.add(teleportTracker);
+        trackers.add(worldTracker);
+        trackers.add(transactionTracker);
+        trackers.add(keepAliveTracker);
+        trackers.add(entityTracker);
+        trackers.add(attributeTracker);
+        trackers.add(velocityTracker);
+        trackers.add(actionTracker);
+
+        emulationEngine = new EmulationEngine(this);
 
         checkData.enable(this);
+    }
+
+    public Player getBukkitPlayer() {
+        return Bukkit.getPlayer(uuid);
     }
 
     /**
@@ -118,13 +123,17 @@ public class PlayerData {
                 .sum();
     }
 
-    public ClientVersion getClientVersion() {
-        ClientVersion clientVersion = PacketEvents.getAPI().getProtocolManager().getClientVersion(bukkitPlayer);
+    public int getEntityId() {
+        if (entityId != -1)
+            return entityId;
 
-        if (clientVersion == null) {
-            return ClientVersion.getById(PacketEvents.getAPI().getServerManager().getVersion().getProtocolVersion());
+        try {
+            entityId = getBukkitPlayer().getEntityId();
+        } catch (NullPointerException exception) {
+            // The player hasn't been loaded yet, they just joined, shouldnt be an issue
+            exception.printStackTrace();
         }
 
-        return clientVersion;
+        return entityId;
     }
 }

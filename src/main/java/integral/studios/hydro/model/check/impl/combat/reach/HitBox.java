@@ -8,6 +8,6 @@ import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 
 public class HitBox extends Check {
     public HitBox(PlayerData playerData) {
-        super(playerData, "HitBox", "Modification Of Hit Box Check", "Mexify", new ViolationHandler(20, 160L), Category.COMBAT, SubCategory.REACH);
+        super(playerData, "HitBox", "Modification Of Hit Box Check", new ViolationHandler(20, 160L), Category.COMBAT, SubCategory.REACH);
     }
 }

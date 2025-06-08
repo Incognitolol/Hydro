@@ -8,8 +8,8 @@ import integral.studios.hydro.model.PlayerData;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 
 public abstract class PacketCheck extends Check {
-    public PacketCheck(PlayerData playerData, String name, String desc, String credits, ViolationHandler violationHandler, Category category, SubCategory subCategory) {
-        super(playerData, name, desc, credits, violationHandler, category, subCategory);
+    public PacketCheck(PlayerData playerData, String name, String desc, ViolationHandler violationHandler, Category category, SubCategory subCategory) {
+        super(playerData, name, desc, violationHandler, category, subCategory);
     }
 
     public abstract void handle(PacketReceiveEvent event);

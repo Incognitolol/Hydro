@@ -2,8 +2,8 @@ package integral.studios.hydro.model.check.impl.misc.post;
 
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
-import integral.studios.hydro.model.check.type.PostActionCheck;
 import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.model.check.type.PostActionCheck;
 
 public class PostC extends PostActionCheck {
     public PostC(PlayerData playerData) {

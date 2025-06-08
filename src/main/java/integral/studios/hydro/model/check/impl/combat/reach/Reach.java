@@ -4,169 +4,257 @@ import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.util.chat.CC;
 import integral.studios.hydro.model.check.type.PacketCheck;
 import integral.studios.hydro.model.check.violation.category.Category;
 import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation;
-import integral.studios.hydro.model.tracker.impl.entity.TrackedEntity;
-import integral.studios.hydro.model.tracker.impl.entity.TrackedPosition;
+import integral.studios.hydro.util.mcp.AxisAlignedBB;
+import integral.studios.hydro.util.mcp.MovingObjectPosition;
+import integral.studios.hydro.util.mcp.Vec3;
+import integral.studios.hydro.util.player.tracker.entity.TrackedEntity;
+import integral.studios.hydro.util.player.tracker.entity.TrackedPosition;
 import integral.studios.hydro.util.math.MathUtil;
 import integral.studios.hydro.util.math.client.ClientMath;
 import integral.studios.hydro.util.math.client.impl.OptifineMath;
 import integral.studios.hydro.util.math.client.impl.VanillaMath;
-import integral.studios.hydro.util.mcp.*;
-import integral.studios.hydro.util.packet.PacketHelper;
-
-import java.util.concurrent.atomic.AtomicReference;
+import integral.studios.hydro.util.mcp.PlayerUtil;
+import integral.studios.hydro.util.packet.PacketUtil;
 
 public class Reach extends PacketCheck {
-    private static final boolean[] BOOLEANS = {true, false};
 
-    private static final double REACH_VALUE = 3.001D, HIT_BOX_VALUE = 10.0D;
+    // Constants
+    private static final double SURVIVAL_REACH = 3.0;
+    private static final double CREATIVE_REACH = 6.0;
+    private static final double MAX_REACH_THRESHOLD = 0.001; // Small buffer for precision
+    private static final double HITBOX_EXPANSION = 0.1;
+    private static final double ZERO_THREE_EXPANSION = 0.03;
+    private static final double RAY_LENGTH = 6.0;
 
-    private final OptifineMath optifineMath = new OptifineMath();
+    private static final double HITBOX_MAX_DISTANCE = 10.0;
+    private static final int HITBOX_VL_THRESHOLD = 40;
 
-    private final VanillaMath vanillaMath = new VanillaMath();
+    // Math implementations
+    private final ClientMath[] mathImplementations = {
+            new OptifineMath(),  // Fast math (Optifine)
+            new VanillaMath()    // Standard math
+    };
 
-    private int entityId;
+    private int pendingEntityId = -1;
+    private boolean hasPendingAttack = false;
 
-    private boolean attacked;
-
-    private double hitBoxVL = -1;
+    private double hitboxViolations = 0;
 
     public Reach(PlayerData playerData) {
-        super(playerData, "Reach", "Modification Of Attack Distance Check", "Mexify", new ViolationHandler(20, 160L), Category.COMBAT, SubCategory.REACH);
+        super(playerData, "Reach", "Detects modified attack distance",
+                new ViolationHandler(10, 160L), Category.COMBAT, SubCategory.REACH);
     }
 
     @Override
     public void handle(PacketReceiveEvent event) {
-        // Handle incoming INTERACT_ENTITY packets
         if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
-            WrapperPlayClientInteractEntity interactEntity = new WrapperPlayClientInteractEntity(event);
+            handleInteractEntity(event);
+        } else if (PacketUtil.isFlying(event.getPacketType())) {
+            handleFlyingPacket();
+        }
+    }
 
-            // Cancel the packet if the player is teleporting
-            if (teleportTracker.isTeleporting()) {
+    private void handleInteractEntity(PacketReceiveEvent event) {
+        WrapperPlayClientInteractEntity wrapper = new WrapperPlayClientInteractEntity(event);
+
+        if (wrapper.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
+            return;
+        }
+
+        if (teleportTracker.isTeleporting() && attributeTracker.getAbilities().isCreativeMode()) {
+            event.setCancelled(true);
+            return;
+        }
+
+        int entityId = wrapper.getEntityId();
+        TrackedEntity entity = entityTracker.get(entityId);
+
+        if (entity == null) {
+            if (entityTracker.isTracking(entityId)) {
                 event.setCancelled(true);
-                return;
             }
+            return;
+        }
 
-            if (interactEntity.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
-                attacked = true;
-                entityId = interactEntity.getEntityId();
+        if (attributeTracker.getAbilities().isCreativeMode()) {
+            return;
+        }
 
-                // Get the compensated entity from the entity tracker
-                TrackedEntity compensatedEntity = entityTracker.getEntityMap().get(entityId);
+        pendingEntityId = entityId;
+        hasPendingAttack = true;
+    }
 
-                // Cancel the packet if the entity is not found
-                if (compensatedEntity == null) {
-                    if (entityTracker.getEntityMap().containsKey(entityId)) {
-                        event.setCancelled(true);
-                    }
+    private void handleFlyingPacket() {
+        if (!hasPendingAttack || teleportTracker.isTeleporting()) {
+            return;
+        }
 
-                    return;
-                }
+        hasPendingAttack = false;
 
-                // Cancel the packet if the player is in creative mode
-                if (attributeTracker.isCreativeMode()) {
-                    return;
-                }
+        TrackedEntity entity = entityTracker.get(pendingEntityId);
+        if (entity == null) {
+            return;
+        }
+
+        double minDistance = calculateMinimumReachDistance(entity);
+
+        if (minDistance > HITBOX_MAX_DISTANCE) {
+            handleHitboxViolation(minDistance);
+        } else {
+            hitboxViolations = Math.max(0, hitboxViolations - 5);
+        }
+
+        double maxAllowedReach = getMaxAllowedReach();
+
+        if (minDistance > maxAllowedReach && minDistance < HITBOX_MAX_DISTANCE) {
+            if (++vl > 2.5) {
+                handleViolation(new DetailedPlayerViolation(this,
+                        String.format("%n- %sDistance: %s%.3f %s(max: %.3f)",
+                                CC.PRI, CC.SEC, minDistance, CC.PRI, maxAllowedReach)));
+            }
+        } else if (minDistance <= maxAllowedReach) {
+            decreaseVl(0.05);
+        }
+    }
+
+    private double calculateMinimumReachDistance(TrackedEntity entity) {
+        double minDistance = Double.MAX_VALUE;
+
+        Vec3[] eyePositions = getPossibleEyePositions();
+        Vec3[] eyeRotations = getPossibleEyeRotations();
+
+        for (Vec3 eyePos : eyePositions) {
+            for (Vec3 eyeRotation : eyeRotations) {
+
+                Vec3 rayEnd = eyePos.addVector(
+                        eyeRotation.xCoord * RAY_LENGTH,
+                        eyeRotation.yCoord * RAY_LENGTH,
+                        eyeRotation.zCoord * RAY_LENGTH
+                );
+
+                double distance = getMinDistanceToEntity(entity, eyePos, rayEnd);
+                minDistance = Math.min(minDistance, distance);
             }
         }
 
-        // Handle flying packets
-        if (PacketHelper.isFlying(event.getPacketType())) {
-            // Skip the check if no attack happened or the player is teleporting
-            if (!attacked || teleportTracker.isTeleporting()) {
-                return;
-            }
+        return minDistance;
+    }
 
-            attacked = false;
+    private Vec3[] getPossibleEyePositions() {
+        double normalEyeHeight = MathUtil.getEyeHeight(false);
+        double sneakingEyeHeight = MathUtil.getEyeHeight(true);
 
-            // Get the compensated entity from the entity tracker
-            TrackedEntity compensatedEntity = entityTracker.get(entityId);
+        return new Vec3[] {
+                new Vec3(positionTracker.getLastX(),
+                        positionTracker.getLastY() + normalEyeHeight,
+                        positionTracker.getLastZ()),
 
-            if (compensatedEntity == null) {
-                return;
-            }
+                new Vec3(positionTracker.getLastX(),
+                        positionTracker.getLastY() + sneakingEyeHeight,
+                        positionTracker.getLastZ())
+        };
+    }
 
-            AtomicReference<Double> minDistance = new AtomicReference<>(Double.MAX_VALUE);
+    private Vec3[] getPossibleEyeRotations() {
+        Vec3[] rotations = new Vec3[mathImplementations.length * 3];
+        int index = 0;
 
+        // Test with different math implementations
+        for (ClientMath math : mathImplementations) {
 
-            for (boolean fastMath : BOOLEANS) {
-                ClientMath clientMath = fastMath ? optifineMath : vanillaMath;
+            rotations[index++] = MathUtil.getVectorForRotation(
+                    rotationTracker.getYaw(),
+                    rotationTracker.getPitch(),
+                    math
+            );
 
-                // Calculate the possible rotation for yaw and pitch
-                Vec3[] possibleEyeRotation = {
-                        MathUtil.getVectorForRotation(rotationTracker.getYaw(), rotationTracker.getPitch(), clientMath),
-                        MathUtil.getVectorForRotation(rotationTracker.getLastYaw(), rotationTracker.getLastPitch(), clientMath),
-                        MathUtil.getVectorForRotation(rotationTracker.getLastYaw(), rotationTracker.getPitch(), clientMath),
-                };
+            rotations[index++] = MathUtil.getVectorForRotation(
+                    rotationTracker.getLastYaw(),
+                    rotationTracker.getLastPitch(),
+                    math
+            );
 
-                for (boolean sneaking : BOOLEANS) {
-                    for (Vec3 eyeRotation : possibleEyeRotation) {
-                        // Calculate the eye position based on player's position and eye height
-                        Vec3 eyePos = new Vec3(
-                                movementTracker.getLastX(),
-                                movementTracker.getLastY() + MathUtil.getEyeHeight(sneaking),
-                                movementTracker.getLastZ()
-                        );
+            rotations[index++] = MathUtil.getVectorForRotation(
+                    rotationTracker.getLastYaw(),
+                    rotationTracker.getPitch(),
+                    math
+            );
+        }
 
-                        // Calculate the end position of the reach ray
-                        Vec3 endReachRay = eyePos.addVector(
-                                   eyeRotation.xCoord * 6.0D,
-                                eyeRotation.yCoord * 6.0D,
-                                eyeRotation.zCoord * 6.0D
-                        );
+        return rotations;
+    }
 
-                        for (TrackedPosition position : compensatedEntity.getPositions()) {
-                            // Create an axis-aligned bounding box from entity's position
-                            AxisAlignedBB axisAlignedBB = new AxisAlignedBB(
-                                    position.getPosX(),
-                                    position.getPosY(),
-                                    position.getPosZ()
-                            );
+    private double getMinDistanceToEntity(TrackedEntity entity, Vec3 eyePos, Vec3 rayEnd) {
+        double minDistance = Double.MAX_VALUE;
 
-                            // Expand BoundingBox for 1.7/1.8 players
-                            axisAlignedBB = axisAlignedBB.expand(0.1F, 0.1F, 0.1F);
+        minDistance = Math.min(minDistance,
+                checkPositionDistance(entity.getConfirmedPosition(), eyePos, rayEnd));
 
-                            // Expand BoundingBox when 0.03 has possibly occurred
-                            if (playerData.getMovementTracker().getTicksSincePosition() > 0) {
-                                axisAlignedBB = axisAlignedBB.expand(0.03, 0.03, 0.03);
-                            }
+        if (entity.hasPendingMovement()) {
+            minDistance = Math.min(minDistance,
+                    checkPositionDistance(entity.getPendingPosition(), eyePos, rayEnd));
+        }
 
-                            // Calculate the intersection of the reach ray and the bounding box
-                            MovingObjectPosition intercept = axisAlignedBB.calculateIntercept(eyePos, endReachRay);
+        for (TrackedPosition position : entity.getPositions()) {
+            minDistance = Math.min(minDistance,
+                    checkPositionDistance(position, eyePos, rayEnd));
+        }
 
-                            if (intercept != null) {
-                                double range = intercept.hitVec.distanceTo(eyePos);
+        return minDistance;
+    }
 
-                                // Use the smallest outcome
-                                if (range < minDistance.get()) {
-                                    minDistance.set(range);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    private double checkPositionDistance(TrackedPosition position, Vec3 eyePos, Vec3 rayEnd) {
+        if (position == null) {
+            return Double.MAX_VALUE;
+        }
 
-            if (minDistance.get() > HIT_BOX_VALUE) {
-                if (++hitBoxVL > 40D) {
-                    playerData.getCheckData().getChecks().stream().filter(check -> check.getName().equalsIgnoreCase("HitBox")).findAny().get()
-                            .handleViolation(new DetailedPlayerViolation(this, "\n- §3HDistance: §b" + minDistance));
-                }
-            } else {
-                hitBoxVL = Math.max(hitBoxVL - 5D, 0);
-            }
+        // Get entity bounding box
+        AxisAlignedBB boundingBox = PlayerUtil.getBoundingBox(
+                position.getPosX(),
+                position.getPosY(),
+                position.getPosZ()
+        );
 
-            if (minDistance.get() > REACH_VALUE && minDistance.get() < HIT_BOX_VALUE) {
-                if (++vl > 2.5D) {
-                    handleViolation(new DetailedPlayerViolation(this, "\n- §3RDistance: §b" + minDistance));
-                }
-            } else if (minDistance.get() < REACH_VALUE) {
-                decreaseVl(0.05D);
-            }
+        // Expand for hitbox
+        boundingBox = boundingBox.expand(HITBOX_EXPANSION, HITBOX_EXPANSION, HITBOX_EXPANSION);
+
+        // Additional expansion for 0.03 movement
+        if (positionTracker.isPossiblyZeroThree()) {
+            boundingBox = boundingBox.expand(ZERO_THREE_EXPANSION, ZERO_THREE_EXPANSION, ZERO_THREE_EXPANSION);
+        }
+
+        // Calculate ray intersection
+        MovingObjectPosition intercept = boundingBox.calculateIntercept(eyePos, rayEnd);
+
+        if (intercept != null && intercept.hitVec != null) {
+            return intercept.hitVec.distanceTo(eyePos);
+        }
+
+        return Double.MAX_VALUE;
+    }
+
+    private double getMaxAllowedReach() {
+        boolean isCreative = attributeTracker.getAbilities().isCreativeMode();
+        return (isCreative ? CREATIVE_REACH : SURVIVAL_REACH) + MAX_REACH_THRESHOLD;
+    }
+
+    private void handleHitboxViolation(double distance) {
+        hitboxViolations++;
+
+        if (hitboxViolations > HITBOX_VL_THRESHOLD) {
+            playerData.getCheckData().getChecks().stream()
+                    .filter(check -> check.getName().equalsIgnoreCase("HitBox"))
+                    .findFirst()
+                    .ifPresent(hitboxCheck ->
+                            hitboxCheck.handleViolation(new DetailedPlayerViolation(this,
+                                    String.format("%n- %sHitbox Distance: %s%.3f", CC.PRI, CC.SEC, distance)))
+                    );
         }
     }
 }

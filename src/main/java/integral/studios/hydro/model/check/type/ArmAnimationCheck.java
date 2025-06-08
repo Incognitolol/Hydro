@@ -7,7 +7,7 @@ import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.PlayerData;
 import integral.studios.hydro.util.math.MathUtil;
-import integral.studios.hydro.util.packet.PacketHelper;
+import integral.studios.hydro.util.packet.PacketUtil;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -23,8 +23,8 @@ public abstract class ArmAnimationCheck extends PacketCheck {
 
     private int movements;
 
-    public ArmAnimationCheck(PlayerData playerData, String name, String desc, String credits, ViolationHandler violationHandler, boolean combatCheck, boolean doubleClicks, int maxSamples, int maxMovements) {
-        super(playerData, name, desc, credits, violationHandler, Category.COMBAT, SubCategory.AUTO_CLICKER);
+    public ArmAnimationCheck(PlayerData playerData, String name, String desc, ViolationHandler violationHandler, boolean combatCheck, boolean doubleClicks, int maxSamples, int maxMovements) {
+        super(playerData, name, desc, violationHandler, Category.COMBAT, SubCategory.AUTO_CLICKER);
 
         this.combatCheck = combatCheck;
         this.doubleClicks = doubleClicks;
@@ -46,7 +46,7 @@ public abstract class ArmAnimationCheck extends PacketCheck {
                 }
 
                 if (clickSamples.add(movements) && clickSamples.size() == maxClickSamples) {
-                    double cps = MathUtil.getCps(clickSamples);
+                    double cps = MathUtil.getCPS(clickSamples);
 
                     handle(clickSamples, cps);
 
@@ -55,7 +55,7 @@ public abstract class ArmAnimationCheck extends PacketCheck {
             }
 
             movements = 0;
-        } else if (PacketHelper.isFlying(event.getPacketType())) {
+        } else if (PacketUtil.isFlying(event.getPacketType())) {
             ++movements;
         }
     }

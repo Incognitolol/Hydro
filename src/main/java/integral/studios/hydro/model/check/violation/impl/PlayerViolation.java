@@ -1,7 +1,7 @@
 package integral.studios.hydro.model.check.violation.impl;
 
-import integral.studios.hydro.model.check.Check;
 import integral.studios.hydro.model.check.violation.base.AbstractPlayerViolation;
+import integral.studios.hydro.model.check.Check;
 import lombok.Getter;
 
 @Getter
@@ -19,5 +19,4 @@ public class PlayerViolation extends AbstractPlayerViolation {
 
         this.level = 1;
     }
-
 }

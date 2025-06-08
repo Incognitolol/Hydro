@@ -9,13 +9,13 @@ import integral.studios.hydro.model.check.violation.category.Category;
 import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.check.violation.impl.PlayerViolation;
-import integral.studios.hydro.util.packet.PacketHelper;
+import integral.studios.hydro.util.packet.PacketUtil;
 
 public class BadPacketsB extends PacketCheck {
     private boolean sent = false;
 
     public BadPacketsB(PlayerData playerData) {
-        super(playerData, "Bad Packets B", "Double Sprint or Sneak Check", "", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets B", "Double Sprint or Sneak Check", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override
@@ -29,8 +29,7 @@ public class BadPacketsB extends PacketCheck {
 
             if (entityAction.getAction().name().toLowerCase().contains("sprint") || entityAction.getAction().name().toLowerCase().contains("sneak"))
                 sent = true;
-
-        } else if (PacketHelper.isFlying(event.getPacketType())) {
+        } else if (PacketUtil.isFlying(event.getPacketType())) {
             sent = false;
         } else if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
             if (sent) handleViolation(new PlayerViolation(this));

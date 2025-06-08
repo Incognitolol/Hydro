@@ -32,6 +32,7 @@ public class HttpUtil {
             try (InputStreamReader inputStreamReader = new InputStreamReader(connection.getInputStream());
                  BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
                 String string;
+
                 while ((string = bufferedReader.readLine()) != null) {
                     sb.append(string);
                 }

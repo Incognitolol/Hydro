@@ -1,28 +1,28 @@
 package integral.studios.hydro.model.check.impl.misc.badpackets;
 
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientKeepAlive;
 import integral.studios.hydro.model.PlayerData;
-import integral.studios.hydro.model.check.type.RotationCheck;
+import integral.studios.hydro.model.check.type.PacketCheck;
 import integral.studios.hydro.model.check.violation.category.Category;
 import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
-import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation;
-import integral.studios.hydro.util.location.CustomLocation;
+import integral.studios.hydro.model.check.violation.impl.PlayerViolation;
 
-public class BadPacketsE extends RotationCheck {
+public class BadPacketsE extends PacketCheck {
     public BadPacketsE(PlayerData playerData) {
-        super(playerData, "Bad Packets E", "Chunk Exploiting", "Incognito", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
+        super(playerData, "Bad Packets E", "Spoofed KeepAlive packet", new ViolationHandler(2, 60L), Category.MISC, SubCategory.BAD_PACKETS);
     }
 
     @Override
-    public void handle(CustomLocation to, CustomLocation from) {
-        double deltaXZ = movementTracker.getDeltaXZ();
-        double deltaY = movementTracker.getDeltaY();
+    public void handle(PacketReceiveEvent event) {
+        if (event.getPacketType() == PacketType.Play.Client.KEEP_ALIVE) {
+            WrapperPlayClientKeepAlive keepAlive = new WrapperPlayClientKeepAlive(event);
 
-        if (deltaXZ > 1.0E10 && Math.abs(deltaY) > 1.0E10) {
-            handleViolation(new DetailedPlayerViolation(this,
-                    "\n- §3DeltaXZ: §b" + deltaXZ
-                            + "\n- §3DeltaY (ABS): §b" + Math.abs(deltaY)
-            ));
+            if (keepAlive.getId() == 0) {
+                handleViolation(new PlayerViolation(this));
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
 package integral.studios.hydro.util.task;
 
 import integral.studios.hydro.Hydro;
-import integral.studios.hydro.service.DataBaseService;
 import integral.studios.hydro.model.check.violation.log.Log;
+import integral.studios.hydro.service.DataBaseService;
 import integral.studios.hydro.service.LogService;
 import org.bukkit.scheduler.BukkitRunnable;
 

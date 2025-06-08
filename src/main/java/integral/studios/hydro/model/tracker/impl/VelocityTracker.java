@@ -7,7 +7,7 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityVelocity;
 import integral.studios.hydro.model.PlayerData;
 import integral.studios.hydro.model.tracker.Tracker;
-import integral.studios.hydro.util.packet.PacketHelper;
+import integral.studios.hydro.util.packet.PacketUtil;
 import lombok.Getter;
 
 import java.util.ArrayDeque;
@@ -17,11 +17,7 @@ import java.util.Deque;
 public class VelocityTracker extends Tracker {
     private final Deque<Vector3d> possibleVelocities = new ArrayDeque<>();
 
-    private Vector3d lastRemovedVelocity = new Vector3d(666, 666, 666);
-
-    private int ticksSinceVelocity;
-
-    private boolean confirmed, split;
+    private int ticksSinceVelocity = 1000;
 
     public VelocityTracker(PlayerData playerData) {
         super(playerData);
@@ -29,17 +25,8 @@ public class VelocityTracker extends Tracker {
 
     @Override
     public void registerIncomingPreHandler(PacketReceiveEvent event) {
-        if (PacketHelper.isFlying(event.getPacketType())) {
+        if (PacketUtil.isFlying(event.getPacketType())) {
             ticksSinceVelocity++;
-        }
-    }
-
-    @Override
-    public void registerIncomingPostHandler(PacketReceiveEvent event) {
-        if (PacketHelper.isFlying(event.getPacketType())) {
-            possibleVelocities.clear();
-
-            split = confirmed;
         }
     }
 
@@ -50,23 +37,21 @@ public class VelocityTracker extends Tracker {
 
             if (entityVelocity.getEntityId() == playerData.getEntityId()) {
                 playerData.getTransactionTracker().confirmPre(() -> {
-                    double x = entityVelocity.getVelocity().x ;
+                    double x = entityVelocity.getVelocity().x;
                     double y = entityVelocity.getVelocity().y;
                     double z = entityVelocity.getVelocity().z;
 
-                    possibleVelocities.add(new Vector3d(x,y,z));
+                    possibleVelocities.add(new Vector3d(x, y, z));
                     ticksSinceVelocity = 0;
-
-                    confirmed = true;
                 });
 
                 playerData.getTransactionTracker().confirmPost(() -> {
                     if (possibleVelocities.size() > 1) {
-                        this.lastRemovedVelocity = possibleVelocities.removeFirst();
-                    }
+                        Vector3d velocity = possibleVelocities.peekLast();
 
-                    // The Mexify way
-                    confirmed = false;
+                        possibleVelocities.clear();
+                        possibleVelocities.add(velocity);
+                    }
                 });
             }
         }
@@ -77,6 +62,6 @@ public class VelocityTracker extends Tracker {
     }
 
     public boolean isOnFirstTick() {
-        return !this.possibleVelocities.isEmpty();
+        return ticksSinceVelocity <= 1;
     }
 }

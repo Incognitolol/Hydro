@@ -7,8 +7,9 @@ import org.atteo.classindex.ClassIndex;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.Set;
+import java.text.Collator;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 public class CheckService {
@@ -17,8 +18,7 @@ public class CheckService {
     private final Set<Constructor<?>> constructors = new HashSet<>();
 
     public CheckService() {
-        ClassIndex.getSubclasses(Check.class, Check.class.getClassLoader())
-                .forEach(clazz -> {
+        ClassIndex.getSubclasses(Check.class, Check.class.getClassLoader()).forEach(clazz -> {
                     if (Modifier.isAbstract(clazz.getModifiers())) {
                         return;
                     }
@@ -33,5 +33,10 @@ public class CheckService {
                 e.printStackTrace();
             }
         });
+    }
+
+    public List<String> getAlphabeticallySortedChecks() {
+        return checkClasses.stream().map(Class::getSimpleName).sorted(Collator.getInstance()).collect(Collectors.toList());
+
     }
 }

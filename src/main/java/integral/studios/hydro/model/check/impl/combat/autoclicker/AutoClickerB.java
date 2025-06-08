@@ -1,25 +1,28 @@
 package integral.studios.hydro.model.check.impl.combat.autoclicker;
 
-import dev.sim0n.iridium.math.statistic.Stats;
 import integral.studios.hydro.model.check.type.ArmAnimationCheck;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation;
 import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.util.chat.CC;
+import integral.studios.hydro.util.math.MathUtil;
 
-import java.util.Queue;
+import java.util.*;
 
 public class AutoClickerB extends ArmAnimationCheck {
     public AutoClickerB(PlayerData playerData) {
-        super(playerData, "Auto Clicker B", "Low Distribution of Kurtosis Check", "Incognito", ViolationHandler.EXPERIMENTAL, false, false, 750, 8);
+        super(playerData, "Auto Clicker B", "Sparse Outliers Check", ViolationHandler.EXPERIMENTAL, false, false, 1500, 8);
     }
 
     @Override
     public void handle(Queue<Integer> clickSamples, double cps) {
-        double kurtosis = Stats.kurtosis(clickSamples);
+        long outliers = Arrays.stream(MathUtil.dequeTranslator(clickSamples)).filter(d -> d >= 4).count();
 
-        // platykurticcuh
-        if (kurtosis <= 0) {
-            handleViolation(new DetailedPlayerViolation(this, "\n- §3Kurtosis: §b" + kurtosis + "\n- §3CPS: §b" + cps));
+        if (outliers <= 5) {
+            handleViolation(new DetailedPlayerViolation(this,
+                    "\n- " + CC.PRI + "Outliers: " + CC.SEC + outliers +
+                            "\n- " + CC.PRI + "CPS: " + CC.SEC + cps
+            ));
         }
     }
 }

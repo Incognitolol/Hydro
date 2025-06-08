@@ -5,14 +5,17 @@ import integral.studios.hydro.model.check.violation.category.Category;
 import integral.studios.hydro.model.check.violation.category.SubCategory;
 import integral.studios.hydro.model.check.violation.handler.ViolationHandler;
 import integral.studios.hydro.model.PlayerData;
-import integral.studios.hydro.util.location.CustomLocation;
+import integral.studios.hydro.util.chat.CC;
+import integral.studios.hydro.model.check.violation.impl.DetailedPlayerViolation;
 
 public class GroundA extends PositionCheck {
+    private int groundSpoofTicks;
+
     public GroundA(PlayerData playerData) {
-        super(playerData, "Ground A", "Yes Check", "", new ViolationHandler(20, 300L), Category.MOVEMENT, SubCategory.GROUND);
+        super(playerData, "Ground A", "Yes check", new ViolationHandler(20, 300L), Category.MOVEMENT, SubCategory.GROUND);
     }
 
     @Override
-    public void handle(CustomLocation to, CustomLocation from) {
+    public void handle() {
     }
 }

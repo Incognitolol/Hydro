@@ -1,49 +1,76 @@
 package integral.studios.hydro.util.mcp;
 
-import org.bukkit.Location;
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
+import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.util.collisions.WrappedBlock;
+import integral.studios.hydro.util.collisions.CollisionBox;
+import integral.studios.hydro.util.collisions.CollisionData;
+import integral.studios.hydro.util.math.MathHelper;
+import lombok.Getter;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@Getter
 public class AxisAlignedBB {
-    public final double minX;
-    public final double minY;
-    public final double minZ;
-    public final double maxX;
-    public final double maxY;
-    public final double maxZ;
+    public double minX;
+    public double minY;
+    public double minZ;
+    public double maxX;
+    public double maxY;
+    public double maxZ;
 
-    public AxisAlignedBB(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        this.minX = minX;
-        this.minY = minY;
-        this.minZ = minZ;
-        this.maxX = maxX;
-        this.maxY = maxY;
-        this.maxZ = maxZ;
+    public AxisAlignedBB(double x1, double y1, double z1, double x2, double y2, double z2) {
+        this.minX = Math.min(x1, x2);
+        this.minY = Math.min(y1, y2);
+        this.minZ = Math.min(z1, z2);
+        this.maxX = Math.max(x1, x2);
+        this.maxY = Math.max(y1, y2);
+        this.maxZ = Math.max(z1, z2);
     }
 
-    public AxisAlignedBB(double x, double y, double z) {
-        this.minX = x - 0.3;
-        this.minY = y;
-        this.minZ = z - 0.3;
-        this.maxX = x + 0.3;
-        this.maxY = y + 1.8;
-        this.maxZ = z + 0.3;
+    public AxisAlignedBB offsetAndUpdate(double par1, double par3, double par5) {
+        this.minX += par1;
+        this.minY += par3;
+        this.minZ += par5;
+        this.maxX += par1;
+        this.maxY += par3;
+        this.maxZ += par5;
+        return this;
     }
 
-    public AxisAlignedBB(Location loc) {
-        this(loc.getX(), loc.getY(), loc.getZ());
+    public List<WrappedBlock> getBlocks(PlayerData data) {
+        List<WrappedBlock> blocks = new ArrayList<>();
+
+        for (int x = MathHelper.floor_double(minX); x < MathHelper.floor_double(maxX) + 1; x++) {
+            for (int y = MathHelper.floor_double(minY); y < MathHelper.floor_double(maxY) + 1; y++) {
+                for (int z = MathHelper.floor_double(minZ); z < MathHelper.floor_double(maxZ) + 1; z++) {
+                    WrappedBlockState block = data.getWorldTracker().getBlock(x, y, z);
+
+                    if (!block.getType().isSolid())
+                        continue;
+
+                    CollisionBox collisionBox = CollisionData.getData(block.getType())
+                            .getMovementCollisionBoxes(data, data.getClientVersion(), block, x, y, z);
+
+                    if (collisionBox.isCollided(this)) {
+                        blocks.add(new WrappedBlock(block, collisionBox, x, y, z));
+                    }
+                }
+            }
+        }
+
+        return blocks;
     }
 
-    /**
-     * returns an AABB with corners x1, y1, z1 and x2, y2, z2
-     */
-    public static AxisAlignedBB fromBounds(double x1, double y1, double z1, double x2, double y2, double z2) {
-        double d0 = Math.min(x1, x2);
-        double d1 = Math.min(y1, y2);
-        double d2 = Math.min(z1, z2);
-        double d3 = Math.max(x1, x2);
-        double d4 = Math.max(y1, y2);
-        double d5 = Math.max(z1, z2);
-        return new AxisAlignedBB(d0, d1, d2, d3, d4, d5);
+    public Vec3 getCenter() {
+        return new Vec3(
+                (maxX + minX) / 2D,
+                (maxY + minY) / 2D,
+                (maxZ + minZ) / 2D
+        );
     }
+
 
     /**
      * Adds the coordinates to the bounding box extending it if the point lies outside the current ranges. Args: x, y, z
@@ -91,6 +118,16 @@ public class AxisAlignedBB {
         return new AxisAlignedBB(d0, d1, d2, d3, d4, d5);
     }
 
+    public AxisAlignedBB expand(double minX, double maxX, double minY, double maxY, double minZ, double maxZ) {
+        double d0 = this.minX - minX;
+        double d1 = this.minY - minY;
+        double d2 = this.minZ - minZ;
+        double d3 = this.maxX + maxX;
+        double d4 = this.maxY + maxY;
+        double d5 = this.maxZ + maxZ;
+        return new AxisAlignedBB(d0, d1, d2, d3, d4, d5);
+    }
+
     public AxisAlignedBB union(AxisAlignedBB other) {
         double d0 = Math.min(this.minX, other.minX);
         double d1 = Math.min(this.minY, other.minY);
@@ -98,6 +135,19 @@ public class AxisAlignedBB {
         double d3 = Math.max(this.maxX, other.maxX);
         double d4 = Math.max(this.maxY, other.maxY);
         double d5 = Math.max(this.maxZ, other.maxZ);
+        return new AxisAlignedBB(d0, d1, d2, d3, d4, d5);
+    }
+
+    /**
+     * returns an AABB with corners x1, y1, z1 and x2, y2, z2
+     */
+    public static AxisAlignedBB fromBounds(double x1, double y1, double z1, double x2, double y2, double z2) {
+        double d0 = Math.min(x1, x2);
+        double d1 = Math.min(y1, y2);
+        double d2 = Math.min(z1, z2);
+        double d3 = Math.max(x1, x2);
+        double d4 = Math.max(y1, y2);
+        double d5 = Math.max(z1, z2);
         return new AxisAlignedBB(d0, d1, d2, d3, d4, d5);
     }
 
@@ -193,7 +243,14 @@ public class AxisAlignedBB {
      * Returns whether the given bounding box intersects with this one. Args: axisAlignedBB
      */
     public boolean intersectsWith(AxisAlignedBB other) {
-        return other.maxX > this.minX && other.minX < this.maxX && (other.maxY > this.minY && other.minY < this.maxY && other.maxZ > this.minZ && other.minZ < this.maxZ);
+        return other.maxX > this.minX && other.minX < this.maxX ? (other.maxY > this.minY && other.minY < this.maxY ? other.maxZ > this.minZ && other.minZ < this.maxZ : false) : false;
+    }
+
+    /**
+     * Returns if the supplied Vec3D is completely inside the bounding box
+     */
+    public boolean isVecInside(Vec3 vec) {
+        return vec.xCoord > this.minX && vec.xCoord < this.maxX ? (vec.yCoord > this.minY && vec.yCoord < this.maxY ? vec.zCoord > this.minZ && vec.zCoord < this.maxZ : false) : false;
     }
 
     /**
@@ -304,21 +361,21 @@ public class AxisAlignedBB {
      * Checks if the specified vector is within the YZ dimensions of the bounding box. Args: Vec3D
      */
     private boolean isVecInYZ(Vec3 vec) {
-        return vec != null && vec.yCoord >= this.minY && vec.yCoord <= this.maxY && vec.zCoord >= this.minZ && vec.zCoord <= this.maxZ;
+        return vec == null ? false : vec.yCoord >= this.minY && vec.yCoord <= this.maxY && vec.zCoord >= this.minZ && vec.zCoord <= this.maxZ;
     }
 
     /**
      * Checks if the specified vector is within the XZ dimensions of the bounding box. Args: Vec3D
      */
     private boolean isVecInXZ(Vec3 vec) {
-        return vec != null && vec.xCoord >= this.minX && vec.xCoord <= this.maxX && vec.zCoord >= this.minZ && vec.zCoord <= this.maxZ;
+        return vec == null ? false : vec.xCoord >= this.minX && vec.xCoord <= this.maxX && vec.zCoord >= this.minZ && vec.zCoord <= this.maxZ;
     }
 
     /**
      * Checks if the specified vector is within the XY dimensions of the bounding box. Args: Vec3D
      */
     private boolean isVecInXY(Vec3 vec) {
-        return vec != null && vec.xCoord >= this.minX && vec.xCoord <= this.maxX && vec.yCoord >= this.minY && vec.yCoord <= this.maxY;
+        return vec == null ? false : vec.xCoord >= this.minX && vec.xCoord <= this.maxX && vec.yCoord >= this.minY && vec.yCoord <= this.maxY;
     }
 
     public String toString() {
@@ -327,5 +384,9 @@ public class AxisAlignedBB {
 
     public boolean func_181656_b() {
         return Double.isNaN(this.minX) || Double.isNaN(this.minY) || Double.isNaN(this.minZ) || Double.isNaN(this.maxX) || Double.isNaN(this.maxY) || Double.isNaN(this.maxZ);
+    }
+
+    public AxisAlignedBB clone() {
+        return new AxisAlignedBB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

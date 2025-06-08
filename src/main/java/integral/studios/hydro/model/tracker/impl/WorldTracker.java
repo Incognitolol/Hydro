@@ -5,6 +5,7 @@ import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.world.BlockFace;
 import com.github.retrooper.packetevents.protocol.world.chunk.BaseChunk;
 import com.github.retrooper.packetevents.protocol.world.chunk.impl.v1_16.Chunk_v1_9;
 import com.github.retrooper.packetevents.protocol.world.chunk.impl.v_1_18.Chunk_v1_18;
@@ -14,19 +15,24 @@ import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
-import integral.studios.hydro.model.PlayerData;
 import integral.studios.hydro.model.tracker.Tracker;
+import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.util.math.MathHelper;
 import lombok.Getter;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-//Credits to ScatDev https://github.com/ScatDev/Aquarium/blob/main/src/main/java/dev/scat/aquarium/data/processor/impl/WorldProcessor.java
-//For the original code, for more information, visit https://github.com/ScatDev/Aquarium/blob/.
+//Taken from Grim and other devs worked on it
 @Getter
 public class WorldTracker extends Tracker {
 
-    private final Map<Long, BaseChunk[]> chunks = new HashMap<>();
+    private static final int CHUNK_HEIGHT = 16;
+    private static final int CHUNK_SIZE = 16;
+    private static final int COORD_MASK = 0xF;
+    private static final int CHUNK_SHIFT = 4;
+
+    private final Map<Long, BaseChunk[]> chunks = new ConcurrentHashMap<>();
 
     public WorldTracker(PlayerData playerData) {
         super(playerData);
@@ -35,149 +41,217 @@ public class WorldTracker extends Tracker {
     @Override
     public void registerOutgoingPreHandler(PacketSendEvent event) {
         if (event.getPacketType() == PacketType.Play.Server.CHUNK_DATA) {
-            WrapperPlayServerChunkData mapChunk = new WrapperPlayServerChunkData(event);
-
-           playerData.getTransactionTracker().confirmPre(() -> {
-                long xz = toLong(mapChunk.getColumn().getX(), mapChunk.getColumn().getZ());
-
-
-                if (mapChunk.getColumn().isFullChunk()) {
-                    chunks.put(xz, mapChunk.getColumn().getChunks());
-                } else {
-                    if (chunks.containsKey(xz)) {
-                        BaseChunk[] currentChunks = chunks.get(xz);
-
-                        for (int i = 0; i < 15; i++) {
-                            BaseChunk chunk = mapChunk.getColumn().getChunks()[i];
-
-                            if (chunk != null) {
-                                currentChunks[i] = chunk;
-                            }
-                        }
-
-                        chunks.put(xz, currentChunks);
-                    }
-                }
-            });
+            handleChunkData(event);
         } else if (event.getPacketType() == PacketType.Play.Server.MAP_CHUNK_BULK) {
-            WrapperPlayServerChunkDataBulk mapChunkBulk = new WrapperPlayServerChunkDataBulk(event);
-
-            playerData.getTransactionTracker().confirmPre(() -> {
-                for (int i = 0; i < mapChunkBulk.getX().length; i++) {
-
-                    int x = mapChunkBulk.getX()[i];
-                    int z = mapChunkBulk.getZ()[i];
-
-                    long xz = toLong(x, z);
-
-                    chunks.put(xz, mapChunkBulk.getChunks()[i]);
-                }
-            });
+            handleChunkBulk(event);
         } else if (event.getPacketType() == PacketType.Play.Server.UNLOAD_CHUNK) {
-            WrapperPlayServerUnloadChunk unloadChunk = new WrapperPlayServerUnloadChunk(event);
-
-            long xz = toLong(unloadChunk.getChunkX(), unloadChunk.getChunkZ());
-
-            playerData.getTransactionTracker().confirmPost(() -> {
-                chunks.remove(xz);
-            });
+            handleUnloadChunk(event);
         } else if (event.getPacketType() == PacketType.Play.Server.BLOCK_CHANGE) {
-            WrapperPlayServerBlockChange blockChange = new WrapperPlayServerBlockChange(event);
-
-            int x = blockChange.getBlockPosition().getX();
-            int y = blockChange.getBlockPosition().getY();
-            int z = blockChange.getBlockPosition().getZ();
-
-            long xz = toLong(x >> 4, z >> 4);
-
-            playerData.getTransactionTracker().confirmPre(() -> {
-                if (!chunks.containsKey(xz)) {
-                    chunks.put(xz, new BaseChunk[16]);
-                }
-
-                BaseChunk chunk = chunks.get(xz)[y >> 4];
-
-                if (chunk == null) {
-                    chunk = create();
-                    chunk.set(0, 0, 0 ,0);
-                    chunks.get(xz)[y >> 4] = chunk;
-                }
-
-                chunks.get(xz)[y >> 4].set(x & 0xF, y & 0xF, z & 0xF, blockChange.getBlockId());
-            });
+            handleBlockChange(event);
         } else if (event.getPacketType() == PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
-            WrapperPlayServerMultiBlockChange multiBlockChange = new WrapperPlayServerMultiBlockChange(event);
-
-            for (WrapperPlayServerMultiBlockChange.EncodedBlock block : multiBlockChange.getBlocks()) {
-                int x = block.getX();
-                int y = block.getY();
-                int z = block.getZ();
-
-                long xz = toLong(x >> 4, z >> 4);
-
-                playerData.getTransactionTracker().confirmPre(() -> {
-                    if (!chunks.containsKey(xz)) {
-                        chunks.put(xz, new BaseChunk[16]);
-                    }
-
-                    BaseChunk chunk = chunks.get(xz)[y >> 4];
-
-                    if (chunk == null) {
-                        chunk = create();
-                        chunk.set(0, 0, 0 ,0);
-                        chunks.get(xz)[y >> 4] = chunk;
-                    }
-
-                    chunks.get(xz)[y >> 4].set(x & 0xF, y & 0xF, z & 0xF, block.getBlockId());
-                });
-            }
+            handleMultiBlockChange(event);
         }
     }
 
     @Override
     public void registerIncomingPreHandler(PacketReceiveEvent event) {
         if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) {
-            WrapperPlayClientPlayerBlockPlacement blockPlace = new WrapperPlayClientPlayerBlockPlacement(event);
+            handleBlockPlacement(event);
+        }
+    }
 
-            Vector3i pos = blockPlace.getBlockPosition();
+    private void handleChunkData(PacketSendEvent event) {
+        WrapperPlayServerChunkData mapChunk = new WrapperPlayServerChunkData(event);
 
-            long xz = toLong(pos.getX() >> 4, pos.getZ() >> 4);
+        playerData.getTransactionTracker().confirmPre(() -> {
+            long chunkKey = getChunkKey(mapChunk.getColumn().getX(), mapChunk.getColumn().getZ());
 
-            boolean block = blockPlace.getItemStack().isPresent()
-                    && blockPlace.getItemStack().get().getType().getPlacedType() != null;
+            if (mapChunk.getColumn().isFullChunk()) {
+                chunks.put(chunkKey, mapChunk.getColumn().getChunks());
+            } else {
+                updatePartialChunk(chunkKey, mapChunk.getColumn().getChunks());
+            }
+        });
+    }
 
-            if (block && chunks.containsKey(xz)) {
-                chunks.get(xz)[pos.getY() >> 4].set(pos.getX() & 0xF, pos.getY() & 0xF, pos.getZ() & 0xF,
-                        blockPlace.getItemStack().get().getType().getId(playerData.getClientVersion()));
+    private void handleChunkBulk(PacketSendEvent event) {
+        WrapperPlayServerChunkDataBulk mapChunkBulk = new WrapperPlayServerChunkDataBulk(event);
+
+        playerData.getTransactionTracker().confirmPre(() -> {
+            int[] xCoords = mapChunkBulk.getX();
+            int[] zCoords = mapChunkBulk.getZ();
+            BaseChunk[][] chunkData = mapChunkBulk.getChunks();
+
+            for (int i = 0; i < xCoords.length; i++) {
+                long chunkKey = getChunkKey(xCoords[i], zCoords[i]);
+                chunks.put(chunkKey, chunkData[i]);
+            }
+        });
+    }
+
+    private void handleUnloadChunk(PacketSendEvent event) {
+        WrapperPlayServerUnloadChunk unloadChunk = new WrapperPlayServerUnloadChunk(event);
+        long chunkKey = getChunkKey(unloadChunk.getChunkX(), unloadChunk.getChunkZ());
+
+        playerData.getTransactionTracker().confirmPost(() -> chunks.remove(chunkKey));
+    }
+
+    private void handleBlockChange(PacketSendEvent event) {
+        WrapperPlayServerBlockChange blockChange = new WrapperPlayServerBlockChange(event);
+        Vector3i position = blockChange.getBlockPosition();
+
+        playerData.getTransactionTracker().confirmPre(() -> {
+            setBlock(position.getX(), position.getY(), position.getZ(), blockChange.getBlockId());
+        });
+    }
+
+    private void handleMultiBlockChange(PacketSendEvent event) {
+        WrapperPlayServerMultiBlockChange multiBlockChange = new WrapperPlayServerMultiBlockChange(event);
+
+        playerData.getTransactionTracker().confirmPre(() -> {
+            for (WrapperPlayServerMultiBlockChange.EncodedBlock block : multiBlockChange.getBlocks()) {
+                setBlock(block.getX(), block.getY(), block.getZ(), block.getBlockId());
+            }
+        });
+    }
+
+    private void handleBlockPlacement(PacketReceiveEvent event) {
+        WrapperPlayClientPlayerBlockPlacement blockPlace = new WrapperPlayClientPlayerBlockPlacement(event);
+
+        if (!blockPlace.getItemStack().isPresent()) {
+            return;
+        }
+
+        var placedType = blockPlace.getItemStack().get().getType().getPlacedType();
+        if (placedType == null) {
+            return;
+        }
+
+        Vector3i placedPosition = getBlockPlacementPosition(blockPlace.getBlockPosition(), blockPlace.getFace());
+        int blockId = placedType.createBlockState().getGlobalId();
+
+        setBlock(placedPosition.getX(), placedPosition.getY(), placedPosition.getZ(), blockId);
+    }
+
+    private void updatePartialChunk(long chunkKey, BaseChunk[] newChunks) {
+        BaseChunk[] existingChunks = chunks.get(chunkKey);
+        if (existingChunks == null) {
+            return;
+        }
+
+        for (int i = 0; i < Math.min(newChunks.length, CHUNK_HEIGHT); i++) {
+            if (newChunks[i] != null) {
+                existingChunks[i] = newChunks[i];
             }
         }
     }
 
-    public long toLong(int x, int z) {
-        return ((x & 0xFFFFFFFFL) << 32L) | (z & 0xFFFFFFFFL);
+    private void setBlock(int x, int y, int z, int blockId) {
+        long chunkKey = getChunkKey(x >> CHUNK_SHIFT, z >> CHUNK_SHIFT);
+        BaseChunk[] chunkColumn = chunks.computeIfAbsent(chunkKey, k -> new BaseChunk[CHUNK_HEIGHT]);
+
+        int chunkY = y >> CHUNK_SHIFT;
+        if (chunkY < 0 || chunkY >= chunkColumn.length) {
+            return;
+        }
+
+        BaseChunk chunk = chunkColumn[chunkY];
+        if (chunk == null) {
+            chunk = createChunk();
+            chunk.set(0, 0, 0, 0); // Initialize chunk
+            chunkColumn[chunkY] = chunk;
+        }
+
+        chunk.set(x & COORD_MASK, y & COORD_MASK, z & COORD_MASK, blockId);
     }
 
     public WrappedBlockState getBlock(int x, int y, int z) {
-        long xz = toLong(x >> 4, z >> 4);
+        long chunkKey = getChunkKey(x >> CHUNK_SHIFT, z >> CHUNK_SHIFT);
+        BaseChunk[] chunkColumn = chunks.get(chunkKey);
 
-        if (chunks.containsKey(xz)) {
-            BaseChunk[] baseChunks = chunks.get(xz);
-
-            if (y < 0 || (y >> 4) > baseChunks.length || baseChunks[y >> 4] == null)
-                return WrappedBlockState.getByGlobalId(0);
-
-            return baseChunks[y >> 4].get(x & 0xF, y & 0xF, z & 0xF);
+        if (chunkColumn == null) {
+            return WrappedBlockState.getByGlobalId(0);
         }
-        return WrappedBlockState.getByGlobalId(0);
+
+        int chunkY = y >> CHUNK_SHIFT;
+        if (chunkY < 0 || chunkY >= chunkColumn.length || chunkColumn[chunkY] == null) {
+            return WrappedBlockState.getByGlobalId(0);
+        }
+
+        return chunkColumn[chunkY].get(
+                playerData.getClientVersion(),
+                x & COORD_MASK,
+                y & COORD_MASK,
+                z & COORD_MASK
+        );
     }
 
-    // Taken from grim cause im lazy tbh
-    private static BaseChunk create() {
-        if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_18)) {
+    public WrappedBlockState getBlock(double x, double y, double z) {
+        return getBlock(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z));
+    }
+
+    public boolean isChunkLoaded(double x, double z) {
+        long chunkKey = getChunkKey((int) x >> CHUNK_SHIFT, (int) z >> CHUNK_SHIFT);
+        return chunks.containsKey(chunkKey) && chunks.get(chunkKey) != null;
+    }
+
+
+    public BaseChunk getChunk(double x, double y, double z) {
+        long chunkKey = getChunkKey((int) x >> CHUNK_SHIFT, (int) z >> CHUNK_SHIFT);
+        BaseChunk[] chunkColumn = chunks.get(chunkKey);
+
+        if (chunkColumn == null) {
+            return null;
+        }
+
+        int chunkY = (int) y >> CHUNK_SHIFT;
+        if (chunkY < 0 || chunkY >= chunkColumn.length) {
+            return null;
+        }
+
+        return chunkColumn[chunkY];
+    }
+
+
+    private static long getChunkKey(int x, int z) {
+        return ((long) x << 32) | (z & 0xFFFFFFFFL);
+    }
+
+    private static BaseChunk createChunk() {
+        ServerVersion version = PacketEvents.getAPI().getServerManager().getVersion();
+
+        if (version.isNewerThanOrEquals(ServerVersion.V_1_18)) {
             return new Chunk_v1_18();
-        } else if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_16)) {
+        } else if (version.isNewerThanOrEquals(ServerVersion.V_1_16)) {
             return new Chunk_v1_9(0, DataPalette.createForChunk());
         }
-        return new Chunk_v1_9(0, new DataPalette(new ListPalette(4), new LegacyFlexibleStorage(4, 4096), PaletteType.CHUNK));
+
+        // 1.8 and older versions
+        return new Chunk_v1_9(0, new DataPalette(
+                new ListPalette(4),
+                new LegacyFlexibleStorage(4, 4096),
+                PaletteType.CHUNK
+        ));
+    }
+
+    private static Vector3i getBlockPlacementPosition(Vector3i clickedPos, BlockFace face) {
+        return switch (face) {
+            case UP -> clickedPos.add(0, 1, 0);
+            case DOWN -> clickedPos.add(0, -1, 0);
+            case NORTH -> clickedPos.add(0, 0, -1);
+            case SOUTH -> clickedPos.add(0, 0, 1);
+            case WEST -> clickedPos.add(-1, 0, 0);
+            case EAST -> clickedPos.add(1, 0, 0);
+            default -> clickedPos;
+        };
+    }
+
+    public void clearChunks() {
+        chunks.clear();
+    }
+
+
+    public int getLoadedChunkCount() {
+        return chunks.size();
     }
 }

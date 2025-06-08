@@ -1,9 +1,11 @@
 package integral.studios.hydro.model.check;
 
 import integral.studios.hydro.Hydro;
-import integral.studios.hydro.model.check.type.*;
-import integral.studios.hydro.service.CheckService;
 import integral.studios.hydro.model.PlayerData;
+import integral.studios.hydro.model.check.type.PacketCheck;
+import integral.studios.hydro.model.check.type.PositionCheck;
+import integral.studios.hydro.model.check.type.RotationCheck;
+import integral.studios.hydro.service.CheckService;
 import lombok.Getter;
 
 import java.util.Set;

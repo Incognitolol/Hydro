@@ -2,16 +2,15 @@ package integral.studios.hydro.model.tracker.impl;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import integral.studios.hydro.Hydro;
+import integral.studios.hydro.model.tracker.Tracker;
 import dev.thomazz.pledge.api.PacketFrame;
 import dev.thomazz.pledge.api.event.ErrorType;
 import dev.thomazz.pledge.api.event.PacketFrameErrorEvent;
 import dev.thomazz.pledge.api.event.PacketFrameReceiveEvent;
 import dev.thomazz.pledge.api.event.ReceiveType;
-import integral.studios.hydro.Hydro;
 import integral.studios.hydro.model.PlayerData;
-import integral.studios.hydro.model.tracker.Tracker;
 import lombok.Getter;
-
 
 @Getter
 public class TransactionTracker extends Tracker {
@@ -52,6 +51,7 @@ public class TransactionTracker extends Tracker {
 
             scheduledTransactions.put((short) frame.getId1(), runnable);
         } catch (Exception ignored) {
+
         }
     }
 

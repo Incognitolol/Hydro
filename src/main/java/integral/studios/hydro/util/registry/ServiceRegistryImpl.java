@@ -25,6 +25,7 @@ public class ServiceRegistryImpl implements ServiceRegistry {
     @Nullable
     public <T> T getOrNull(@Nonnull ServiceKey<T> key) {
         Provider<T> provider = (Provider<T>) registry.get(key);
+
         return provider == null ? null : provider.get();
     }
 

@@ -10,10 +10,8 @@ import java.util.List;
 
 @UtilityClass
 public class CC {
-
-    public static final String API_FAILED =
-            ChatColor.RED + "The API failed to retrieve your information. Try again later.";
-
+    public static String PRI = ChatColor.GOLD.toString();
+    public static String SEC = ChatColor.YELLOW.toString();
 
     public static final String BLUE = ChatColor.BLUE.toString();
     public static final String AQUA = ChatColor.AQUA.toString();
@@ -74,6 +72,4 @@ public class CC {
 
         return toReturn;
     }
-
 }
-
